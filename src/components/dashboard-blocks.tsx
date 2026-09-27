@@ -98,7 +98,7 @@ export function SegmentBreakdownCards({
   showLogic,
 }: {
   breakdown: {
-    segment: { id: string; name: string; listTotal: number; logic: string | null };
+    segment: { id: string; name: string; listTotal: number; logic: string | null; read: string | null };
     counts: DispositionCounts;
     logged: number;
     pctOfList: number;
@@ -135,6 +135,9 @@ export function SegmentBreakdownCards({
                   <span className="text-[11px] w-10 text-right text-[var(--db-muted)]">{r.pct}</span>
                 </div>
               ))}
+            </div>
+            <div className="text-[11.5px] text-[var(--db-ink-soft)] leading-relaxed mt-3 pt-3 border-t border-[var(--db-line)]">
+              {segment.read || "Not enough tagged calls yet to read this list."}
             </div>
           </Card>
         );

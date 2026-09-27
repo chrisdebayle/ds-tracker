@@ -2,15 +2,15 @@ import {
   DispositionCounts,
   MIN_SAMPLE_SIZE,
   dispositionBreakdown,
+  listDrivenOutcomesPct,
   meetingActivatedPct,
-  rawConnectRate,
   totalCompleted,
 } from "@/lib/disposition";
 import { Callout, Card, DataTable, KpiCard, Section, StatusPill } from "@/components/ui";
 import { SegmentBreakdownCards } from "@/components/dashboard-blocks";
 
 export interface ReportSegment {
-  segment: { id: string; name: string; listTotal: number; logic: string | null };
+  segment: { id: string; name: string; listTotal: number; logic: string | null; read: string | null };
   counts: DispositionCounts;
   logged: number;
   pctOfList: number;
@@ -21,7 +21,6 @@ export function ReportView({
   clientName,
   window,
   counts,
-  dials,
   headlineQuote,
   findings,
   nextSteps,
@@ -31,7 +30,6 @@ export function ReportView({
   clientName: string;
   window: string;
   counts: DispositionCounts;
-  dials: number;
   headlineQuote?: string | null;
   findings?: string[] | null;
   nextSteps?: string[] | null;
@@ -53,9 +51,21 @@ export function ReportView({
 
       <Section number="01" label="Snapshot" title="Engagement at a glance">
         <div className="grid grid-cols-3 gap-4 mb-4">
-          <KpiCard label="Total Completed Conversations" value={String(completed)} />
-          <KpiCard label="Raw Connect Rate" value={`${rawConnectRate(completed, dials).toFixed(1)}%`} />
-          <KpiCard label="Meeting + Activated %" value={`${meetingActivatedPct(counts).toFixed(1)}%`} />
+          <KpiCard
+            label="List-Driven Outcomes"
+            value={`${listDrivenOutcomesPct(counts).toFixed(1)}%`}
+            sub={<div className="text-[11px] text-[var(--db-muted)]">of every logged conversation</div>}
+          />
+          <KpiCard
+            label="Meeting + Activated"
+            value={`${meetingActivatedPct(counts).toFixed(1)}%`}
+            sub={<div className="text-[11px] text-[var(--db-muted)]">floor 20% &middot; target 25%+</div>}
+          />
+          <KpiCard
+            label="Meetings Booked"
+            value={`${counts.meeting} of ${completed}`}
+            sub={<div className="text-[11px] text-[var(--db-muted)]">logged conversations</div>}
+          />
         </div>
         <Callout>
           {headlineQuote ||

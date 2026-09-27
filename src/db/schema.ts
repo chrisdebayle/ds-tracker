@@ -67,6 +67,7 @@ export const segments = pgTable("segments", {
   listTotal: integer("list_total").notNull().default(0),
   baseDials: integer("base_dials").notNull().default(0),
   baseCounts: jsonb("base_counts").$type<DispositionCounts>().notNull(),
+  read: text("read").default(""),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

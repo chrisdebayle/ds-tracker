@@ -7,7 +7,7 @@ export default async function ReportPrintPage({ params }: { params: Promise<{ id
   const engagement = await getEngagement(id);
   if (!engagement) notFound();
 
-  const [{ counts, dials }, segmentBreakdown] = await Promise.all([
+  const [{ counts }, segmentBreakdown] = await Promise.all([
     getEngagementCounts(id, "all"),
     getSegmentBreakdown(id),
   ]);
@@ -18,7 +18,6 @@ export default async function ReportPrintPage({ params }: { params: Promise<{ id
       clientName={engagement.name}
       window={`${engagement.startDate} – ${engagement.endDate ?? "Ongoing"}`}
       counts={counts}
-      dials={dials}
       headlineQuote={engagement.headlineQuote}
       findings={engagement.findings}
       nextSteps={engagement.nextSteps}

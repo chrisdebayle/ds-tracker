@@ -12,7 +12,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
   const engagement = await getEngagement(id);
   if (!engagement) notFound();
 
-  const [{ counts, dials }, segmentBreakdown, reportLink, origin] = await Promise.all([
+  const [{ counts }, segmentBreakdown, reportLink, origin] = await Promise.all([
     getEngagementCounts(id, "all"),
     getSegmentBreakdown(id),
     getOrCreateShareLink(id, "report"),
@@ -79,7 +79,6 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         clientName={engagement.name}
         window={`${engagement.startDate} – ${engagement.endDate ?? "Ongoing"}`}
         counts={counts}
-        dials={dials}
         headlineQuote={engagement.headlineQuote}
         findings={engagement.findings}
         nextSteps={engagement.nextSteps}

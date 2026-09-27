@@ -89,6 +89,7 @@ async function main() {
         // split proportionally by each segment's share of pre-tool completed conversations.
         baseDials: 1225,
         baseCounts: { ...zero, activated: 1, notNow: 6, referred: 24, notInterested: 13, nurture: 9, nisl: 66 },
+        read: "Account fit and titles both fail at once — the highest NISL of any list despite being sourced for scale.",
       },
       {
         engagementId: jafar.id,
@@ -97,6 +98,7 @@ async function main() {
         logic: "Multi-provider outpatient groups; targets Office Manager or Practice Administrator titles.",
         baseDials: 927,
         baseCounts: { ...zero, activated: 2, notNow: 4, referred: 10, notInterested: 17, nurture: 38, nisl: 19 },
+        read: "Nurture leads but is unconfirmed — most of those records carry a placeholder title, not a real name.",
       },
       {
         engagementId: jafar.id,
@@ -104,6 +106,7 @@ async function main() {
         listTotal: 646,
         logic: "Independent solo and small-group medical practices; sourced primarily from public directories.",
         baseDials: 680,
+        read: "Best account fit of the three, worst data discipline — only 10.2% of the list has ever been disposed.",
         baseCounts: {
           ...zero,
           meeting: 1,

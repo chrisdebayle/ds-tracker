@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getEngagement, getReps, getSegments } from "@/db/queries";
-import { addRep, addSegment, updateEngagement } from "../../../actions";
+import { addRep, addSegment, updateEngagement, updateSegmentRead } from "../../../actions";
 import { Field, inputClass, Button, Card, Pill } from "@/components/ui";
 
 export default async function SetupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -91,8 +91,24 @@ export default async function SetupPage({ params }: { params: Promise<{ id: stri
               <div className="font-semibold text-[var(--db-dark)]">{seg.name}</div>
               <div className="text-[12px] text-[var(--db-muted)] mb-1">List size: {seg.listTotal}</div>
               {seg.logic && (
-                <div className="text-[13px] italic text-[var(--db-ink-soft)]">{seg.logic}</div>
+                <div className="text-[13px] italic text-[var(--db-ink-soft)] mb-3">{seg.logic}</div>
               )}
+              <form action={updateSegmentRead.bind(null, id, seg.id)} className="flex flex-col gap-2">
+                <Field label="Diagnostic Read (shown on Dashboard/Report — why this list performs the way it does)">
+                  <textarea
+                    name="read"
+                    rows={2}
+                    defaultValue={seg.read ?? ""}
+                    placeholder="e.g. Account fit and titles both fail at once — sourced for scale but the highest NISL of any list."
+                    className={inputClass}
+                  />
+                </Field>
+                <div>
+                  <Button type="submit" variant="outline">
+                    Save Read
+                  </Button>
+                </div>
+              </form>
             </Card>
           ))}
           {segmentList.length === 0 && (

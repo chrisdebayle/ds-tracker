@@ -176,6 +176,25 @@ export function rawConnectRate(completed: number, dials: number): number {
   return pctNum(completed, dials);
 }
 
+/**
+ * Share of every logged conversation whose outcome was list/targeting-driven
+ * (NISL + Not Interested + Nurture + DNC + Referred + Not Me + No Longer
+ * With Company) rather than message/rep-driven. This is the report's
+ * headline framing number: "it's the list, not the pitch."
+ */
+export function listDrivenOutcomesPct(counts: DispositionCounts): number {
+  const total = totalCompleted(counts);
+  const listDriven =
+    counts.nisl +
+    counts.notInterested +
+    counts.nurture +
+    counts.dnc +
+    counts.referred +
+    counts.notMe +
+    counts.noLongerWith;
+  return pctNum(listDriven, total);
+}
+
 export interface DispositionRow {
   key: DispositionKey;
   label: string;

@@ -120,6 +120,20 @@ export async function addSegment(engagementId: string, formData: FormData) {
   revalidatePath(`/engagements/${engagementId}/dashboard`);
 }
 
+export async function updateSegmentRead(engagementId: string, segmentId: string, formData: FormData) {
+  await requireAdmin();
+  await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
+
+  await db
+    .update(segments)
+    .set({ read: String(formData.get("read") ?? "").trim() })
+    .where(eq(segments.id, segmentId));
+
+  revalidatePath(`/engagements/${engagementId}/setup`);
+  revalidatePath(`/engagements/${engagementId}/dashboard`);
+  revalidatePath(`/engagements/${engagementId}/report`);
+}
+
 export async function addLogEntry(engagementId: string, formData: FormData) {
   await requireAdmin();
 
