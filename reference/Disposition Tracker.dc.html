@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/chris-debayle-brand-components-ba138143-d322-4d92-9e76-1c25e1a30713/_ds_bundle.css">
+<link rel="stylesheet" href="_ds/chris-debayle-brand-components-ba138143-d322-4d92-9e76-1c25e1a30713/styles.css">
+<script src="_ds/chris-debayle-brand-components-ba138143-d322-4d92-9e76-1c25e1a30713/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--db-light);font-family:var(--db-font-body);}
+a{color:var(--db-primary);text-decoration:none;}
+a:hover{color:var(--db-accent-700);}
+input,select,textarea,button{font-family:var(--db-font-body);}
+input:focus,select:focus{outline:2px solid var(--db-primary);outline-offset:1px;}
+</style>
+</helmet>
+
+<sc-if value="{{ liveMode }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;background:var(--db-light);">
+  <div style="max-width:1200px;margin:0 auto;padding:44px 40px 80px;">
+    <div style="text-align:right;margin-bottom:10px;"><a onClick="{{ exitPreview }}" style="font-size:11px;color:var(--db-muted);cursor:pointer;">Exit preview</a></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--db-line);padding-bottom:20px;margin-bottom:6px;">
+      <div>
+        <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--db-muted);margin-bottom:10px;">Vigent Group LLC &#183; Live Engagement View</div>
+        <div style="font-family:var(--db-font-display);font-weight:700;font-size:28px;color:var(--db-dark);">{{ activeClient.name }}</div>
+        <div style="color:var(--db-muted);font-size:13px;margin-top:6px;">{{ activeClient.window }}</div>
+      </div>
+      <div style="text-align:right;font-size:11.5px;color:var(--db-muted);line-height:1.6;">Updates as calls are logged<br>Prepared by Chris DeBayle</div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin:20px 0 28px;background:var(--db-line);padding:4px;border-radius:var(--db-radius);width:fit-content;">
+      <button onClick="{{ setTabDashboard }}" style="{{ tabDashboardStyle }}">Summary Dashboard</button>
+      <button onClick="{{ setTabRecordings }}" style="{{ tabRecordingsStyle }}">Call Recordings</button>
+    </div>
+
+    <sc-if value="{{ clientTabIsDashboard }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+      <div style="display:flex;gap:6px;background:var(--db-line);padding:4px;border-radius:var(--db-radius);">
+        <sc-for list="{{ rangeOptions }}" as="ro" hint-placeholder-count="3">
+          <button onClick="{{ ro.onClick }}" style="{{ ro.style }}">{{ ro.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:30px;">
+      <sc-for list="{{ kpiCards }}" as="k" hint-placeholder-count="6">
+        <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+          <div style="font-size:10.5px;color:var(--db-muted);margin-bottom:8px;line-height:1.3;">{{ k.label }}</div>
+          <div style="font-family:var(--db-font-display);font-weight:700;font-size:22px;color:{{ k.color }};">{{ k.value }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ activeClient.belowMinimum }}" hint-placeholder-val="{{ false }}">
+      <div style="background:var(--db-tint-warm);border-left:3px solid var(--db-accent-700);border-radius:var(--db-radius);padding:14px 20px;margin-bottom:26px;font-size:13.5px;color:var(--db-dark);line-height:1.5;">
+        Only <b>{{ activeClient.totalCompleted }}</b> completed conversations logged so far. Disposition Science asks for 200+ before drawing conclusions.
+      </div>
+    </sc-if>
+    <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Disposition Breakdown &#8212; {{ rangeLabel }}</div>
+    <div style="margin-bottom:30px;">
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ dispositionTableProps }}" hint-size="100%,420px"></x-import>
+    </div>
+    <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Composite Diagnostic Metrics</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:30px;">
+      <sc-for list="{{ compositeCards }}" as="cm" hint-placeholder-count="2">
+        <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:18px 20px;">
+          <div style="font-size:12px;color:var(--db-muted);margin-bottom:8px;">{{ cm.label }}</div>
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px;">
+            <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);">{{ cm.value }}</div>
+            <div style="font-family:var(--db-font-display);font-weight:600;font-size:11.5px;color:{{ cm.statusColor }};">{{ cm.statusLabel }}</div>
+          </div>
+          <div style="font-size:11.5px;color:var(--db-muted);">Benchmark: {{ cm.benchmark }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Segment Breakdown</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+      <sc-for list="{{ activeClient.segments }}" as="seg" hint-placeholder-count="3">
+        <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:18px;">
+          <div style="font-weight:600;color:var(--db-dark);font-size:14px;margin-bottom:2px;">{{ seg.name }}</div>
+          <div style="font-size:11.5px;color:var(--db-muted);margin-bottom:14px;">{{ seg.logged }} of {{ seg.listTotal }} logged &#183; {{ seg.loggedPct }}%</div>
+          <sc-for list="{{ seg.breakdown }}" as="b" hint-placeholder-count="4">
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--db-ink-soft);margin-bottom:3px;"><span>{{ b.label }}</span><span style="font-weight:600;">{{ b.pct }}%</span></div>
+              <div style="height:5px;background:var(--db-line);border-radius:3px;overflow:hidden;"><div style="height:100%;background:var(--db-primary);width:{{ b.barWidth }};"></div></div>
+            </div>
+          </sc-for>
+          <div style="font-size:11.5px;color:var(--db-ink-soft);line-height:1.5;margin-top:12px;border-top:1px solid var(--db-line);padding-top:12px;">{{ seg.read }}</div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ clientTabIsRecordings }}" hint-placeholder-val="{{ false }}">
+    <div style="overflow-x:auto;border-radius:var(--db-radius);">
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ recordingsTableProps }}" hint-size="100%,320px"></x-import>
+    </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ reportMode }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;background:var(--db-light);">
+  <div style="max-width:960px;margin:0 auto;padding:44px 40px 80px;">
+    <div style="text-align:right;margin-bottom:10px;"><a onClick="{{ exitPreview }}" style="font-size:11px;color:var(--db-muted);cursor:pointer;">Exit preview</a></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--db-line);padding-bottom:24px;margin-bottom:32px;">
+      <div>
+        <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--db-muted);margin-bottom:10px;">Vigent Group LLC &#183; Weekly Engagement Report</div>
+        <div style="font-family:var(--db-font-display);font-weight:700;font-size:28px;color:var(--db-dark);">{{ activeClient.name }}</div>
+        <div style="color:var(--db-muted);font-size:13px;margin-top:6px;">{{ activeClient.window }} &#183; {{ activeClient.totalCompleted }} logged conversations</div>
+      </div>
+      <div style="text-align:right;font-size:11.5px;color:var(--db-muted);line-height:1.6;">Updated weekly<br>Prepared by Chris DeBayle</div>
+    </div>
+
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="01" label="SNAPSHOT" title="Where things stand">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
+        <sc-for list="{{ reportKpis }}" as="k" hint-placeholder-count="3">
+          <div style="background:var(--db-light);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+            <div style="font-size:10.5px;color:var(--db-muted);margin-bottom:8px;">{{ k.label }}</div>
+            <div style="font-family:var(--db-font-display);font-weight:700;font-size:24px;color:var(--db-dark);">{{ k.value }}</div>
+            <div style="font-size:11px;color:var(--db-muted);margin-top:4px;">{{ k.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.Callout" ground="light" source="{{ activeClient.name }} engagement &#183; disposition diagnostic">
+        {{ reportHeadline }}
+      </x-import>
+    </x-import>
+
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="02" label="DISTRIBUTION" title="All logged conversations">
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ reportDistributionProps }}" hint-size="100%,420px"></x-import>
+    </x-import>
+
+    <sc-if value="{{ activeClient.hasFindings }}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="03" label="FAILURE MODES" title="Ranked by size">
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.MilestoneTable" mark-heading="Rank" name-heading="Failure mode" proof-heading="Share of conversations" dc-props="{{ failureModesProps }}" hint-size="100%,260px"></x-import>
+    </x-import>
+
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="04" label="SEGMENTS" title="Same root cause, different failure mode">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+        <sc-for list="{{ activeClient.segments }}" as="seg" hint-placeholder-count="3">
+          <div style="background:var(--db-light);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+            <div style="font-weight:600;color:var(--db-dark);font-size:13.5px;margin-bottom:2px;">{{ seg.name }}</div>
+            <div style="font-size:11px;color:var(--db-muted);margin-bottom:10px;">{{ seg.logged }} of {{ seg.listTotal }} logged</div>
+            <div style="font-size:12px;color:var(--db-ink-soft);line-height:1.5;">{{ seg.read }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </x-import>
+
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="05" label="NEXT STEPS" title="Ranked by leverage">
+      <x-import component-from-global-scope="ChrisDebayleBrandComponents.RulesList" variant="check" dc-props="{{ recommendationsProps }}" hint-size="100%,220px"></x-import>
+    </x-import>
+    </sc-if>
+
+    <sc-if value="{{ activeClient.belowMinimum }}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="03" label="NEXT" title="Build sample size first">
+      <div style="font-size:14px;color:var(--db-ink-soft);line-height:1.6;">
+        This engagement has {{ activeClient.totalCompleted }} completed conversations. Disposition Science asks for 200+ before drawing conclusions, and 500+ for full confidence. This view will fill in as more calls are logged.
+      </div>
+    </x-import>
+    </sc-if>
+
+    <div style="font-size:11.5px;color:var(--db-muted);border-top:1px solid var(--db-line);padding-top:16px;margin-top:20px;">This is a live view of your engagement &#8212; it updates automatically as new calls are logged. Questions? Reach out to Chris DeBayle, Vigent Group LLC.</div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ adminMode }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;min-height:100vh;background:var(--db-light);">
+
+<div style="width:236px;flex-shrink:0;background:var(--db-ground);min-height:100vh;padding:24px 16px;display:flex;flex-direction:column;gap:24px;position:sticky;top:0;align-self:flex-start;">
+  <div style="padding:0 8px;">
+    <div style="font-family:var(--db-font-display);font-weight:700;font-size:16px;color:var(--db-ink-head);">Disposition Tracker</div>
+    <div style="font-family:var(--db-font-display);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--db-muted-2);margin-top:5px;">Vigent Group LLC</div>
+  </div>
+
+  <div style="background:var(--db-card-dark);border:1px solid var(--db-hair-2);border-radius:var(--db-radius);padding:12px;">
+    <div style="font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-muted-2);margin-bottom:5px;">Active engagement</div>
+    <div style="font-weight:600;color:var(--db-ink-head);font-size:13.5px;line-height:1.3;">{{ activeClient.name }}</div>
+    <div style="font-size:11px;color:var(--db-ink-2);margin-top:3px;">{{ activeClient.window }}</div>
+  </div>
+
+  <nav style="display:flex;flex-direction:column;gap:14px;">
+    <div>
+      <div style="font-family:var(--db-font-display);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-muted-2);padding:0 9px 6px;">Engagement</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ navGroupSetup }}" as="item" hint-placeholder-count="2">
+          <button onClick="{{ item.onClick }}" style="{{ item.style }}" style-hover="background:var(--db-card-dark);color:var(--db-ink-head);">
+            <span style="font-family:var(--db-font-display);font-size:10px;color:var(--db-muted-2);min-width:16px;">{{ item.num }}</span>{{ item.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:var(--db-font-display);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-muted-2);padding:0 9px 6px;">Daily Operations</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ navGroupOperate }}" as="item" hint-placeholder-count="2">
+          <button onClick="{{ item.onClick }}" style="{{ item.style }}" style-hover="background:var(--db-card-dark);color:var(--db-ink-head);">
+            <span style="font-family:var(--db-font-display);font-size:10px;color:var(--db-muted-2);min-width:16px;">{{ item.num }}</span>{{ item.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:var(--db-font-display);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--db-muted-2);padding:0 9px 6px;">Analysis &amp; Reporting</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <sc-for list="{{ navGroupAnalyze }}" as="item" hint-placeholder-count="3">
+          <button onClick="{{ item.onClick }}" style="{{ item.style }}" style-hover="background:var(--db-card-dark);color:var(--db-ink-head);">
+            <span style="font-family:var(--db-font-display);font-size:10px;color:var(--db-muted-2);min-width:16px;">{{ item.num }}</span>{{ item.label }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </nav>
+
+  <div style="margin-top:auto;padding:0 8px;font-size:10.5px;color:var(--db-muted-2);line-height:1.5;border-top:1px solid var(--db-hair-2);padding-top:14px;">
+    Built on the Disposition Science framework (Reisert / Pessar).
+  </div>
+</div>
+
+<div style="flex:1;min-width:0;">
+
+<sc-if value="{{ screenClients }}" hint-placeholder-val="{{ true }}">
+<div style="padding:32px 40px;max-width:1300px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;">
+    <div>
+      <div style="font-family:var(--db-font-display);font-weight:700;font-size:27px;color:var(--db-dark);">Engagements</div>
+      <div style="color:var(--db-muted);font-size:13.5px;margin-top:5px;">Every outbound engagement tracked under Disposition Science.</div>
+    </div>
+    <button style="font-family:var(--db-font-display);font-weight:600;font-size:12.5px;color:#fff;background:var(--db-primary);border:none;border-radius:var(--db-radius);padding:11px 18px;cursor:pointer;">+ New Engagement</button>
+  </div>
+  <div style="display:grid;grid-template-columns:2.2fr 1fr 1.5fr 1fr 1.1fr auto;gap:18px;padding:0 20px;margin-bottom:8px;">
+    <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);">Client</div>
+    <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);">Status</div>
+    <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);">Window</div>
+    <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);">Volume</div>
+    <div style="font-family:var(--db-font-display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);">Meeting + Act.</div>
+    <div></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <sc-for list="{{ clientsList }}" as="c" hint-placeholder-count="4">
+      <div onClick="{{ c.open }}" style="display:grid;grid-template-columns:2.2fr 1fr 1.5fr 1fr 1.1fr auto;align-items:center;gap:18px;background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:17px 20px;cursor:pointer;">
+        <div>
+          <div style="font-weight:600;color:var(--db-dark);font-size:15px;">{{ c.name }}</div>
+          <div style="color:var(--db-muted);font-size:12px;margin-top:2px;">{{ c.location }}</div>
+        </div>
+        <div><span style="{{ c.statusStyle }}">{{ c.status }}</span></div>
+        <div style="color:var(--db-ink-soft);font-size:13px;">{{ c.window }}</div>
+        <div style="color:var(--db-dark);font-size:13px;"><b style="font-family:var(--db-font-display);">{{ c.totalCompleted }}</b> convos</div>
+        <div style="color:var(--db-dark);font-size:13px;">{{ c.meetingActivatedPct }} M+A</div>
+        <div style="color:var(--db-primary);font-family:var(--db-font-display);font-weight:600;font-size:12px;">Open &#8594;</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenSetup }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px;max-width:720px;">
+  <div style="font-family:var(--db-font-display);font-weight:700;font-size:24px;color:var(--db-dark);margin-bottom:4px;">Client / Engagement Setup</div>
+  <div style="color:var(--db-muted);font-size:13.5px;margin-bottom:28px;">Fill in once per engagement. Reps entered here populate the dropdown in Daily Log.</div>
+
+  <div style="margin-bottom:18px;">
+    <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Client / Engagement Name</label>
+    <input value="{{ activeClient.name }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+    <div>
+      <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Engagement Start Date</label>
+      <input value="{{ activeClient.startDate }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+    </div>
+    <div>
+      <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Engagement End Date</label>
+      <input value="{{ activeClient.endDateDisplay }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+    <div>
+      <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Primary Internal Owner</label>
+      <input value="{{ activeClient.owner }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+    </div>
+    <div>
+      <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Dialer(s) in Use</label>
+      <input value="{{ activeClient.dialers }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+    </div>
+  </div>
+  <div style="margin-bottom:18px;">
+    <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">SOW Reference</label>
+    <input value="{{ activeClient.sow }}" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;color:var(--db-dark);" />
+  </div>
+  <div style="margin-bottom:26px;">
+    <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:6px;">Notes</label>
+    <div style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;color:var(--db-ink-soft);min-height:52px;line-height:1.5;">{{ activeClient.notes }}</div>
+  </div>
+
+  <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:8px;">Reps on this Engagement</label>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+    <sc-for list="{{ activeClient.reps }}" as="r" hint-placeholder-count="2">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--db-tint-blue);border:1px solid var(--db-line);border-radius:20px;padding:7px 14px;font-size:13px;color:var(--db-dark);">{{ r }}</div>
+    </sc-for>
+    <button style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-primary);background:transparent;border:1px dashed var(--db-line);border-radius:20px;padding:7px 14px;cursor:pointer;">+ Add rep</button>
+  </div>
+  <div style="font-size:11.5px;color:var(--db-muted);border-top:1px solid var(--db-line);padding-top:14px;margin-bottom:30px;">Warm-tinted fields are yours to fill in per engagement &#8212; the template's yellow-fill convention, carried over.</div>
+
+  <label style="display:block;font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--db-muted);margin-bottom:10px;">Target Lists / Segments</label>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+    <sc-for list="{{ activeClient.segments }}" as="seg" hint-placeholder-count="1">
+      <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:14px 16px;">
+        <div style="font-weight:600;color:var(--db-dark);font-size:14px;margin-bottom:3px;">{{ seg.name }}</div>
+        <div style="font-size:11.5px;color:var(--db-muted);margin-bottom:6px;">{{ seg.logged }} of {{ seg.listTotal }} logged</div>
+        <div style="font-size:12.5px;color:var(--db-ink-soft);line-height:1.5;">{{ seg.logic }}</div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="background:var(--db-tint-blue);border:1px dashed var(--db-line);border-radius:var(--db-radius);padding:16px;">
+    <div style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-dark);margin-bottom:10px;">+ Add Target List</div>
+    <div style="display:grid;grid-template-columns:1.2fr 2fr .8fr;gap:10px;margin-bottom:10px;">
+      <input value="{{ newSegName }}" onChange="{{ setNewSegName }}" placeholder="List name, e.g. Overloaded DSO" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-paper);font-size:13px;" />
+      <input value="{{ newSegLogic }}" onChange="{{ setNewSegLogic }}" placeholder="Targeting logic, e.g. multi-location DSOs, 15+ chairs" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-paper);font-size:13px;" />
+      <input type="number" min="0" value="{{ newSegSize }}" onChange="{{ setNewSegSize }}" placeholder="List size" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-paper);font-size:13px;" />
+    </div>
+    <button onClick="{{ addSegment }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:#fff;background:var(--db-primary);border:none;border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">Add List</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenLog }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px;max-width:1200px;">
+  <div style="font-family:var(--db-font-display);font-weight:700;font-size:24px;color:var(--db-dark);margin-bottom:4px;">Daily Log</div>
+  <div style="color:var(--db-muted);font-size:13.5px;margin-bottom:26px;">{{ activeClient.name }} &#183; one row per rep per day. Log before you hang up, or within 2 minutes.</div>
+
+  <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:24px;margin-bottom:30px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--db-dark);margin-bottom:5px;">Date</label>
+        <input type="date" value="{{ logDate }}" onChange="{{ setLogDate }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--db-dark);margin-bottom:5px;">Rep</label>
+        <select value="{{ logRep }}" onChange="{{ setLogRep }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;">
+          <sc-for list="{{ activeClient.reps }}" as="r" hint-placeholder-count="2"><option value="{{ r }}">{{ r }}</option></sc-for>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--db-dark);margin-bottom:5px;">Target List</label>
+        <select value="{{ logSegment }}" onChange="{{ setLogSegment }}" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;">
+          <sc-for list="{{ segmentOptions }}" as="sg" hint-placeholder-count="1"><option value="{{ sg.id }}">{{ sg.name }}</option></sc-for>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--db-dark);margin-bottom:5px;">Total Dials / Attempts</label>
+        <input type="number" min="0" value="{{ logDials }}" onChange="{{ setLogDials }}" placeholder="0" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--db-dark);margin-bottom:5px;">Talk Time (minutes)</label>
+        <input type="number" min="0" value="{{ logTalk }}" onChange="{{ setLogTalk }}" placeholder="0" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:13.5px;" />
+      </div>
+    </div>
+
+    <div style="font-family:var(--db-font-display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--db-muted);margin-bottom:12px;">Dispositions logged today</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
+      <sc-for list="{{ dispositionInputs }}" as="d" hint-placeholder-count="10">
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--db-dark);margin-bottom:2px;">{{ d.label }}</label>
+          <div style="font-size:10px;color:var(--db-muted);margin-bottom:5px;">{{ d.benchmark }}</div>
+          <input type="number" min="0" value="{{ d.value }}" onChange="{{ d.onChange }}" placeholder="0" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--db-line);border-radius:var(--db-radius);background:var(--db-tint-warm);font-size:14px;" />
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--db-line);padding-top:16px;">
+      <div style="display:flex;gap:28px;">
+        <div>
+          <div style="font-size:10.5px;color:var(--db-muted);">Total Completed Conversations</div>
+          <div style="font-family:var(--db-font-display);font-weight:700;font-size:21px;color:var(--db-dark);">{{ formCompleted }}</div>
+        </div>
+        <div>
+          <div style="font-size:10.5px;color:var(--db-muted);">Raw Connect Rate</div>
+          <div style="font-family:var(--db-font-display);font-weight:700;font-size:21px;color:var(--db-primary);">{{ formConnectRate }}</div>
+        </div>
+      </div>
+      <button onClick="{{ addLogRow }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12.5px;color:#fff;background:var(--db-primary);border:none;border-radius:var(--db-radius);padding:11px 20px;cursor:pointer;">+ Log Entry</button>
+    </div>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:13px;color:var(--db-dark);margin-bottom:12px;">History</div>
+  <div style="overflow-x:auto;border-radius:var(--db-radius);">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ dailyLogTableProps }}" hint-size="100%,320px"></x-import>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenDashboard }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px;max-width:1300px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;">
+    <div>
+      <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);">Summary Dashboard</div>
+      <div style="color:var(--db-muted);font-size:13.5px;margin-top:5px;">{{ activeClient.name }} &#183; auto-calculated from Daily Log</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+      <div style="display:flex;gap:10px;">
+        <button onClick="{{ previewLive }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-dark);background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">Preview Client View</button>
+        <button onClick="{{ copyLiveLink }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-dark);background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">{{ liveLinkLabel }}</button>
+      </div>
+      <div style="display:flex;gap:6px;background:var(--db-line);padding:4px;border-radius:var(--db-radius);">
+        <sc-for list="{{ rangeOptions }}" as="ro" hint-placeholder-count="3">
+          <button onClick="{{ ro.onClick }}" style="{{ ro.style }}">{{ ro.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:10.5px;color:var(--db-muted);margin-top:-16px;margin-bottom:26px;">Client link is live during the engagement &#8212; Dashboard + Call Recordings only, no nav, no other engagements.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:34px;">
+    <sc-for list="{{ kpiCards }}" as="k" hint-placeholder-count="6">
+      <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+        <div style="font-size:10.5px;color:var(--db-muted);margin-bottom:8px;line-height:1.3;">{{ k.label }}</div>
+        <div style="font-family:var(--db-font-display);font-weight:700;font-size:22px;color:{{ k.color }};">{{ k.value }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ activeClient.belowMinimum }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--db-tint-warm);border-left:3px solid var(--db-accent-700);border-radius:var(--db-radius);padding:14px 20px;margin-bottom:30px;font-size:13.5px;color:var(--db-dark);line-height:1.5;">
+      Only <b>{{ activeClient.totalCompleted }}</b> completed conversations logged. Disposition Science asks for 200+ before drawing conclusions &#8212; keep logging before treating this distribution as diagnostic.
+    </div>
+  </sc-if>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Disposition Breakdown &#8212; {{ rangeLabel }}</div>
+  <div style="margin-bottom:34px;">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ dispositionTableProps }}" hint-size="100%,420px"></x-import>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Composite Diagnostic Metrics</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px;">
+    <sc-for list="{{ compositeCards }}" as="cm" hint-placeholder-count="2">
+      <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:18px 20px;">
+        <div style="font-size:12px;color:var(--db-muted);margin-bottom:8px;">{{ cm.label }}</div>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px;">
+          <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);">{{ cm.value }}</div>
+          <div style="font-family:var(--db-font-display);font-weight:600;font-size:11.5px;color:{{ cm.statusColor }};">{{ cm.statusLabel }}</div>
+        </div>
+        <div style="font-size:11.5px;color:var(--db-muted);">Benchmark: {{ cm.benchmark }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Segment Breakdown</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+    <sc-for list="{{ activeClient.segments }}" as="seg" hint-placeholder-count="3">
+      <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:18px;">
+        <div style="font-weight:600;color:var(--db-dark);font-size:14px;margin-bottom:2px;">{{ seg.name }}</div>
+        <div style="font-size:11.5px;color:var(--db-muted);margin-bottom:6px;">{{ seg.logged }} of {{ seg.listTotal }} logged &#183; {{ seg.loggedPct }}%</div>
+        <div style="font-size:11px;color:var(--db-muted);font-style:italic;margin-bottom:14px;">{{ seg.logic }}</div>
+        <sc-for list="{{ seg.breakdown }}" as="b" hint-placeholder-count="4">
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--db-ink-soft);margin-bottom:3px;"><span>{{ b.label }}</span><span style="font-weight:600;">{{ b.pct }}%</span></div>
+            <div style="height:5px;background:var(--db-line);border-radius:3px;overflow:hidden;"><div style="height:100%;background:var(--db-primary);width:{{ b.barWidth }};"></div></div>
+          </div>
+        </sc-for>
+        <div style="font-size:11.5px;color:var(--db-ink-soft);line-height:1.5;margin-top:12px;border-top:1px solid var(--db-line);padding-top:12px;">{{ seg.read }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenRecordings }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px;max-width:1300px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:26px;">
+    <div>
+      <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);">Call Recordings</div>
+      <div style="color:var(--db-muted);font-size:13.5px;margin-top:5px;">{{ activeClient.name }} &#183; index of connected calls; audio lives in Drive/dialer</div>
+    </div>
+    <button style="font-family:var(--db-font-display);font-weight:600;font-size:12.5px;color:#fff;background:var(--db-primary);border:none;border-radius:var(--db-radius);padding:11px 18px;cursor:pointer;">+ Add Recording</button>
+  </div>
+  <div style="overflow-x:auto;border-radius:var(--db-radius);">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ recordingsTableProps }}" hint-size="100%,320px"></x-import>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenReference }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px;max-width:1200px;">
+  <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);margin-bottom:4px;">Disposition Reference</div>
+  <div style="color:var(--db-muted);font-size:13.5px;margin-bottom:30px;">Disposition Science framework: Ryan Reisert &amp; Ronen R. Pessar. Kept here so reps can self-serve.</div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">The 10 Dispositions</div>
+  <div style="margin-bottom:34px;">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ referenceDispTableProps }}" hint-size="100%,480px"></x-import>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">The 3 I's &#8212; What Qualifies as Activated</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:34px;">
+    <sc-for list="{{ threeIs }}" as="i" hint-placeholder-count="3">
+      <div style="background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:18px;">
+        <div style="font-family:var(--db-font-display);font-weight:700;color:var(--db-primary);font-size:14px;margin-bottom:8px;">{{ i.name }}</div>
+        <div style="font-size:13px;color:var(--db-ink-soft);line-height:1.55;">{{ i.def }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">The 6 Most-Confused Pairs</div>
+  <div style="margin-bottom:34px;">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ confusedPairsTableProps }}" hint-size="100%,420px"></x-import>
+  </div>
+
+  <div style="font-family:var(--db-font-display);font-weight:600;font-size:15px;color:var(--db-dark);margin-bottom:14px;">Logging Discipline</div>
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.RulesList" variant="hard" dc-props="{{ loggingDisciplineProps }}" hint-size="100%,90px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ screenReport }}" hint-placeholder-val="{{ false }}">
+<div style="padding:32px 40px 60px;max-width:1200px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+    <div>
+      <div style="font-family:var(--db-font-display);font-weight:700;font-size:26px;color:var(--db-dark);">Diagnostic Report</div>
+      <div style="color:var(--db-muted);font-size:13.5px;margin-top:5px;">{{ activeClient.name }} &#183; {{ activeClient.window }} &#183; {{ activeClient.totalCompleted }} logged conversations</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+      <div style="display:flex;gap:10px;">
+        <button onClick="{{ previewReport }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-dark);background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">Preview Report</button>
+        <button onClick="{{ copyReportLink }}" style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:var(--db-dark);background:var(--db-paper);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">{{ reportLinkLabel }}</button>
+        <button style="font-family:var(--db-font-display);font-weight:600;font-size:12px;color:#fff;background:var(--db-primary);border:none;border-radius:var(--db-radius);padding:9px 16px;cursor:pointer;">Export PDF</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--db-muted);max-width:340px;text-align:right;">Deliver this at engagement close &#8212; a static closeout report, no nav, no other engagements.</div>
+    </div>
+  </div>
+
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="01" label="SNAPSHOT" title="Where things stand">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
+      <sc-for list="{{ reportKpis }}" as="k" hint-placeholder-count="3">
+        <div style="background:var(--db-light);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+          <div style="font-size:10.5px;color:var(--db-muted);margin-bottom:8px;">{{ k.label }}</div>
+          <div style="font-family:var(--db-font-display);font-weight:700;font-size:24px;color:var(--db-dark);">{{ k.value }}</div>
+          <div style="font-size:11px;color:var(--db-muted);margin-top:4px;">{{ k.sub }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.Callout" ground="light" source="{{ activeClient.name }} engagement &#183; disposition diagnostic">
+      {{ reportHeadline }}
+    </x-import>
+  </x-import>
+
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="02" label="DISTRIBUTION" title="All logged conversations">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.DataTable" dc-props="{{ reportDistributionProps }}" hint-size="100%,420px"></x-import>
+  </x-import>
+
+  <sc-if value="{{ activeClient.hasFindings }}" hint-placeholder-val="{{ false }}">
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="03" label="FAILURE MODES" title="Ranked by size">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.MilestoneTable" mark-heading="Rank" name-heading="Failure mode" proof-heading="Share of conversations" dc-props="{{ failureModesProps }}" hint-size="100%,260px"></x-import>
+  </x-import>
+
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="04" label="SEGMENTS" title="Same root cause, different failure mode">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <sc-for list="{{ activeClient.segments }}" as="seg" hint-placeholder-count="3">
+        <div style="background:var(--db-light);border:1px solid var(--db-line);border-radius:var(--db-radius);padding:16px;">
+          <div style="font-weight:600;color:var(--db-dark);font-size:13.5px;margin-bottom:2px;">{{ seg.name }}</div>
+          <div style="font-size:11px;color:var(--db-muted);margin-bottom:10px;">{{ seg.logged }} of {{ seg.listTotal }} logged</div>
+          <div style="font-size:12px;color:var(--db-ink-soft);line-height:1.5;">{{ seg.read }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </x-import>
+
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="05" label="NEXT STEPS" title="Ranked by leverage">
+    <x-import component-from-global-scope="ChrisDebayleBrandComponents.RulesList" variant="check" dc-props="{{ recommendationsProps }}" hint-size="100%,220px"></x-import>
+  </x-import>
+  </sc-if>
+
+  <sc-if value="{{ activeClient.belowMinimum }}" hint-placeholder-val="{{ false }}">
+  <x-import component-from-global-scope="ChrisDebayleBrandComponents.Section" number="03" label="NEXT" title="Build sample size first">
+    <div style="font-size:14px;color:var(--db-ink-soft);line-height:1.6;">
+      This engagement has {{ activeClient.totalCompleted }} completed conversations. Disposition Science asks for 200+ before drawing conclusions, and 500+ for full confidence. Keep logging &#8212; the failure-mode and segment analysis will populate here once the minimum sample is reached.
+    </div>
+  </x-import>
+  </sc-if>
+
+  <div style="font-size:11.5px;color:var(--db-muted);border-top:1px solid var(--db-line);padding-top:16px;margin-top:20px;">Prepared by Chris DeBayle &#183; Vigent Group LLC &#183; Framework: Disposition Science</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const DISP_META = [
+  { key: 'meeting', label: 'Meeting', benchmark: '\u2265 8%' },
+  { key: 'activated', label: 'Activated', benchmark: 'no benchmark' },
+  { key: 'notNow', label: 'Not Now', benchmark: '10\u201320%' },
+  { key: 'notMe', label: 'Not Me', benchmark: '< 10%' },
+  { key: 'referred', label: 'Referred', benchmark: '< 10%' },
+  { key: 'noLongerWith', label: 'No Longer w/ Co.', benchmark: '< 5%' },
+  { key: 'notInterested', label: 'Not Interested', benchmark: '< 15%' },
+  { key: 'dnc', label: 'DNC', benchmark: 'flag if > 3%' },
+  { key: 'nurture', label: 'Nurture', benchmark: '< 5%' },
+  { key: 'nisl', label: 'NISL', benchmark: '< 5%' }
+];
+
+const PILLAR_MAP = {
+  meeting: 'Positive', activated: 'Positive', notNow: 'Timing',
+  notMe: 'List \u00b7 Titles', referred: 'List \u00b7 Titles',
+  noLongerWith: 'List \u00b7 Hygiene', notInterested: 'Message / Rep',
+  dnc: 'List \u00b7 Contact method', nurture: 'List \u00b7 Contact method', nisl: 'List \u00b7 Account fit'
+};
+
+const REFERENCE_DEFS = [
+  ['Meeting', 'Prospect booked on calendar', '\u2265 8%'],
+  ['Activated', "One of the 3 I's present (Intent, Interest, Intrigue); not yet booked", 'no benchmark'],
+  ['Not Now', "Timing isn't right; acknowledged fit but not buying now", '10\u201320%'],
+  ['Not Me', "Right company, wrong person, and they don't know who the right person is", '< 10%'],
+  ['Referred', 'Right company, wrong person, and they gave you the right contact', '< 10%'],
+  ['No Longer With Company', 'Right company, but the target contact has left', '< 5%'],
+  ['Not Interested', 'Conversation ran its course; no interest generated', '< 15%'],
+  ['DNC', 'Prospect explicitly requested removal; permanent, never re-engage', 'honor all; flag if > 3%'],
+  ['Nurture', 'Wrong channel; prospect prefers email or LinkedIn over phone', '< 5%'],
+  ['NISL', "Wrong account; this company doesn't fit your ICP", '< 5%']
+];
+
+const CONFUSED_PAIRS = [
+  ['Not Now vs. Not Interested', 'Call back in 90 days with the same pitch, real conversation? Yes: Not Now. No: Not Interested.'],
+  ['Not Me vs. NISL', "Viable prospect for what you sell? Yes but wrong contact: Not Me. No, company doesn't fit: NISL."],
+  ['Nurture vs. Not Interested', 'Did they suggest how they prefer to be reached? Yes: Nurture. No: Not Interested.'],
+  ['Activated vs. Not Now', 'Active, engaged signal in this call \u2014 a question, a pause, a tone shift? Yes: Activated. No: Not Now.'],
+  ['No Longer With Co. vs. Not Me', 'Left the company, or just the wrong person? Left: No Longer With Company. Still there: Not Me.'],
+  ['DNC vs. Not Interested', 'Asked to be removed, or just declined? Removal request: DNC. Decline only: Not Interested.']
+];
+
+const THREE_IS = [
+  { name: 'Intent', def: 'A stated need or active initiative your solution addresses right now. The strongest signal.' },
+  { name: 'Interest', def: 'Engaged and curious \u2014 follow-up questions, more than one-word answers, no stated initiative.' },
+  { name: 'Intrigue', def: 'You caught their attention; tone shifted, they paused, something you said landed.' }
+];
+
+function pctNum(n, total) { return total ? (n / total * 100) : 0; }
+function pctStr(n, total) { return total ? (n / total * 100).toFixed(1) + '%' : '\u2014'; }
+function statusFor(key, p) {
+  switch (key) {
+    case 'meeting': return p >= 8 ? 'good' : 'watch';
+    case 'activated': return 'neutral';
+    case 'notNow': return (p >= 10 && p <= 20) ? 'good' : 'watch';
+    case 'notMe': case 'referred': return p < 10 ? 'good' : 'watch';
+    case 'noLongerWith': case 'nurture': case 'nisl': return p < 5 ? 'good' : 'watch';
+    case 'notInterested': return p < 15 ? 'good' : 'watch';
+    case 'dnc': return p <= 3 ? 'good' : 'watch';
+    default: return 'neutral';
+  }
+}
+const STATUS_COLOR = { good: 'var(--db-pass)', watch: 'var(--db-fail)', neutral: 'var(--db-muted)' };
+const STATUS_LABEL = { good: 'On target', watch: 'Flagged', neutral: '\u2014' };
+
+function makeClient(c) {
+  const counts = c.counts;
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return Object.assign({}, c, {
+    totalCompleted: total,
+    window: c.startDate + ' \u2013 ' + (c.endDate || 'Ongoing'),
+    endDateDisplay: c.endDate || 'Ongoing',
+    belowMinimum: total < 200,
+    hasFindings: !!c.findings
+  });
+}
+
+const EMPTY_COUNTS = { meeting: 0, activated: 0, notNow: 0, notMe: 0, referred: 0, noLongerWith: 0, notInterested: 0, dnc: 0, nurture: 0, nisl: 0 };
+
+const RAW_CLIENTS = [
+  {
+    id: 'jafar', name: 'Jafar AI, Inc.', location: 'Newark, DE', status: 'Completed',
+    owner: 'Chris DeBayle', dialers: 'PhoneBurner', sow: 'SOW-202505-001',
+    startDate: '2026-06-03', endDate: '2026-08-14',
+    notes: 'Voice-agent outbound engagement across three target lists in dental and medical verticals. Concluded by mutual termination for convenience.',
+    reps: ['Chris DeBayle', 'Jordan Reyes', 'Maria Santos'],
+    totalDials: 3120, talkTimeTotal: 812,
+    counts: { meeting: 1, activated: 7, notNow: 11, notMe: 5, referred: 36, noLongerWith: 14, notInterested: 55, dnc: 8, nurture: 51, nisl: 86 },
+    segments: [
+      { id: 'dso', name: 'Overloaded DSO', listTotal: 300,
+        logic: 'Multi-location DSOs sourced for high call volume; 15+ chairs across locations, verified multi-site status required.',
+        baseCounts: { meeting: 0, activated: 1, notNow: 6, notMe: 0, referred: 24, noLongerWith: 0, notInterested: 13, dnc: 0, nurture: 9, nisl: 66 },
+        read: 'Account fit and titles both fail at once \u2014 the highest NISL of any list despite being sourced for scale.' },
+      { id: 'outpatient', name: 'Outpatient Groups', listTotal: 218,
+        logic: 'Multi-provider outpatient groups; targets Office Manager or Practice Administrator titles.',
+        baseCounts: { meeting: 0, activated: 2, notNow: 4, notMe: 0, referred: 10, noLongerWith: 0, notInterested: 17, dnc: 0, nurture: 38, nisl: 19 },
+        read: "Nurture leads but is unconfirmed \u2014 most of those records carry a placeholder title, not a real name." },
+      { id: 'pmp', name: 'Private Medical Practice', listTotal: 646,
+        logic: 'Independent solo and small-group medical practices; sourced primarily from public directories.',
+        baseCounts: { meeting: 1, activated: 4, notNow: 0, notMe: 0, referred: 2, noLongerWith: 14, notInterested: 28, dnc: 8, nurture: 4, nisl: 5 },
+        read: 'Best account fit of the three, worst data discipline \u2014 only 10.2% of the list has ever been disposed.' }
+    ],
+    findings: [
+      { mark: '01', name: 'Account fit', proof: '51.5% \u00b7 NISL 86 + Not Interested 55' },
+      { mark: '02', name: 'Contact method', proof: '21.5% \u00b7 Nurture 51 + DNC 8' },
+      { mark: '03', name: 'Title targeting', proof: '15.0% \u00b7 Referred 36 + Not Me 5' },
+      { mark: '04', name: 'List hygiene', proof: '5.1% \u00b7 No Longer With Company 14' }
+    ],
+    recommendations: [
+      'Back-fill dispositions on the 687 contacts already worked and never tagged \u2014 zero new dials required.',
+      'Add call-volume and competitor-in-place as disqualifiers, not just industry.',
+      'Add a practice-size or provider-count filter for Private Medical Practice.',
+      "Audit the sourcing behind \u201cOverloaded DSO\u201d \u2014 verify multi-location status before an account is added.",
+      'Source office lines before personal mobiles in Private Medical Practice.',
+      'Skip generalist gatekeeper titles in Overloaded DSO \u2014 go top-down to the actual decision-maker.'
+    ],
+    headline: 'Every negative outcome traced back to who was on the list or how they were being reached, not what was being said.',
+    dailyLog: [
+      { date: '2026-08-11', rep: 'Chris DeBayle', segmentId: 'dso', dials: 58, talkTime: 22, counts: { meeting: 0, activated: 0, notNow: 1, notMe: 0, referred: 2, noLongerWith: 1, notInterested: 3, dnc: 0, nurture: 3, nisl: 5 } },
+      { date: '2026-08-11', rep: 'Jordan Reyes', segmentId: 'outpatient', dials: 64, talkTime: 19, counts: { meeting: 0, activated: 1, notNow: 0, notMe: 1, referred: 1, noLongerWith: 0, notInterested: 4, dnc: 1, nurture: 2, nisl: 6 } },
+      { date: '2026-08-12', rep: 'Maria Santos', segmentId: 'pmp', dials: 51, talkTime: 25, counts: { meeting: 0, activated: 0, notNow: 1, notMe: 0, referred: 3, noLongerWith: 0, notInterested: 2, dnc: 0, nurture: 4, nisl: 4 } },
+      { date: '2026-08-13', rep: 'Chris DeBayle', segmentId: 'dso', dials: 60, talkTime: 21, counts: { meeting: 1, activated: 1, notNow: 0, notMe: 0, referred: 2, noLongerWith: 1, notInterested: 3, dnc: 0, nurture: 3, nisl: 7 } },
+      { date: '2026-08-13', rep: 'Jordan Reyes', segmentId: 'outpatient', dials: 55, talkTime: 17, counts: { meeting: 0, activated: 0, notNow: 1, notMe: 1, referred: 1, noLongerWith: 0, notInterested: 5, dnc: 0, nurture: 2, nisl: 5 } }
+    ],
+    recordings: [
+      { date: '2026-08-13', rep: 'Chris DeBayle', contact: 'Jordan Reyes', company: 'Overloaded DSO Group', duration: 12, consent: 'Yes', notes: 'Referred to Ops Director; asked for ROI case study.' },
+      { date: '2026-08-13', rep: 'Jordan Reyes', contact: 'Priya Shah', company: 'Outpatient Care Partners', duration: 6, consent: 'Yes', notes: 'Asked for email follow-up instead of a call.' },
+      { date: '2026-08-12', rep: 'Maria Santos', contact: 'Tooth Fairy Mobile', company: 'Tooth Fairy Mobile', duration: 15, consent: 'Yes', notes: 'Booked discovery meeting \u2014 the one meeting logged this run.' },
+      { date: '2026-08-11', rep: 'Chris DeBayle', contact: 'R. Alvarez', company: 'Private Medical Practice', duration: 3, consent: 'Yes', notes: 'Requested removal from call list.' }
+    ]
+  },
+  {
+    id: 'northgate', name: 'Northgate Dental Group', location: 'Columbus, OH', status: 'Active',
+    owner: 'Chris DeBayle', dialers: 'PhoneBurner', sow: 'SOW-202609-004',
+    startDate: '2026-09-01', endDate: null,
+    notes: 'Early-stage engagement; ICP is multi-location dental groups, 15+ chairs.',
+    reps: ['Chris DeBayle'],
+    totalDials: 640, talkTimeTotal: 190,
+    counts: { meeting: 4, activated: 9, notNow: 14, notMe: 3, referred: 6, noLongerWith: 2, notInterested: 22, dnc: 1, nurture: 5, nisl: 8 },
+    segments: [{ id: 'multiloc', name: 'Multi-Location Dental', listTotal: 210,
+      logic: 'Dental groups with 3+ locations, 15+ chairs total, targeting the Ops/Practice Director.',
+      baseCounts: { meeting: 4, activated: 9, notNow: 14, notMe: 3, referred: 6, noLongerWith: 2, notInterested: 22, dnc: 1, nurture: 5, nisl: 8 },
+      read: '' }],
+    dailyLog: [
+      { date: '2026-09-22', rep: 'Chris DeBayle', segmentId: 'multiloc', dials: 46, talkTime: 16, counts: { meeting: 1, activated: 2, notNow: 3, notMe: 0, referred: 1, noLongerWith: 0, notInterested: 5, dnc: 0, nurture: 1, nisl: 2 } },
+      { date: '2026-09-23', rep: 'Chris DeBayle', segmentId: 'multiloc', dials: 52, talkTime: 18, counts: { meeting: 0, activated: 3, notNow: 4, notMe: 1, referred: 2, noLongerWith: 0, notInterested: 6, dnc: 0, nurture: 1, nisl: 3 } }
+    ],
+    recordings: [{ date: '2026-09-22', rep: 'Chris DeBayle', contact: 'D. Okafor', company: 'Northgate Family Dental', duration: 9, consent: 'Yes', notes: 'Meeting booked for next Tuesday.' }]
+  },
+  {
+    id: 'riverside', name: 'Riverside Health Partners', location: 'Louisville, KY', status: 'Active',
+    owner: 'Chris DeBayle', dialers: 'FrontSpin', sow: 'SOW-202608-002',
+    startDate: '2026-08-18', endDate: null,
+    notes: 'Outbound to independent physical therapy clinics.',
+    reps: ['Chris DeBayle', 'Maria Santos'],
+    totalDials: 480, talkTimeTotal: 145,
+    counts: { meeting: 2, activated: 5, notNow: 9, notMe: 4, referred: 5, noLongerWith: 3, notInterested: 18, dnc: 2, nurture: 6, nisl: 4 },
+    segments: [{ id: 'ptclinics', name: 'Independent PT Clinics', listTotal: 190,
+      logic: 'Independent (non-chain) physical therapy clinics, 1-3 locations, targeting Owner/Clinical Director.',
+      baseCounts: { meeting: 2, activated: 5, notNow: 9, notMe: 4, referred: 5, noLongerWith: 3, notInterested: 18, dnc: 2, nurture: 6, nisl: 4 },
+      read: '' }],
+    dailyLog: [{ date: '2026-09-20', rep: 'Maria Santos', segmentId: 'ptclinics', dials: 44, talkTime: 14, counts: { meeting: 0, activated: 1, notNow: 2, notMe: 1, referred: 1, noLongerWith: 0, notInterested: 4, dnc: 0, nurture: 2, nisl: 1 } }],
+    recordings: [{ date: '2026-09-20', rep: 'Maria Santos', contact: 'K. Bell', company: 'Riverside Physical Therapy', duration: 5, consent: 'Yes', notes: 'Prefers email; sending case study.' }]
+  },
+  {
+    id: 'acme', name: 'Acme Manufacturing', location: 'Grand Rapids, MI', status: 'Paused',
+    owner: 'Chris DeBayle', dialers: 'Outreach', sow: 'SOW-202607-009',
+    startDate: '2026-07-06', endDate: '2026-08-01',
+    notes: 'Paused at client request pending Q4 budget review.',
+    reps: ['Jordan Reyes'],
+    totalDials: 390, talkTimeTotal: 120,
+    counts: { meeting: 3, activated: 6, notNow: 12, notMe: 8, referred: 10, noLongerWith: 4, notInterested: 40, dnc: 2, nurture: 15, nisl: 12 },
+    segments: [{ id: 'mfg', name: 'Regional Manufacturers', listTotal: 260,
+      logic: 'Regional manufacturers, 50-500 employees, targeting Ops Manager or COO.',
+      baseCounts: { meeting: 3, activated: 6, notNow: 12, notMe: 8, referred: 10, noLongerWith: 4, notInterested: 40, dnc: 2, nurture: 15, nisl: 12 },
+      read: '' }],
+    dailyLog: [{ date: '2026-07-30', rep: 'Jordan Reyes', segmentId: 'mfg', dials: 38, talkTime: 12, counts: { meeting: 0, activated: 1, notNow: 2, notMe: 1, referred: 2, noLongerWith: 0, notInterested: 6, dnc: 0, nurture: 3, nisl: 2 } }],
+    recordings: [{ date: '2026-07-30', rep: 'Jordan Reyes', contact: 'T. Marsh', company: 'Acme Sub-Assembly', duration: 4, consent: 'Yes', notes: 'On hold pending budget review.' }]
+  }
+];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'clients', activeClientId: 'jafar', range: 'all', portalView: 'admin', clientTab: 'dashboard', liveLinkCopied: false, reportLinkCopied: false,
+    logDate: '2026-08-14', logRep: 'Chris DeBayle', logSegment: '', logDials: '', logTalk: '',
+    logCounts: { meeting: '', activated: '', notNow: '', notMe: '', referred: '', noLongerWith: '', notInterested: '', dnc: '', nurture: '', nisl: '' },
+    extraLogs: {}, extraSegments: {},
+    newSegName: '', newSegLogic: '', newSegSize: ''
+  };
+
+  clientsData = RAW_CLIENTS.map(makeClient);
+
+  componentDidMount() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view'), client = params.get('client');
+      if ((view === 'live' || view === 'report') && client) {
+        this.setState({ portalView: view, activeClientId: client });
+      }
+    } catch (e) {}
+  }
+
+  previewLive = () => this.setState({ portalView: 'live', clientTab: 'dashboard' });
+  previewReport = () => this.setState({ portalView: 'report' });
+  exitPreview = () => this.setState({ portalView: 'admin' });
+  setClientTab = (tab) => this.setState({ clientTab: tab });
+  copyLink = (view, flag) => {
+    const url = window.location.origin + window.location.pathname + '?view=' + view + '&client=' + this.state.activeClientId;
+    const done = () => { this.setState({ [flag]: true }); setTimeout(() => this.setState({ [flag]: false }), 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done).catch(() => window.open(url, '_blank'));
+    } else { window.open(url, '_blank'); }
+  };
+  copyLiveLink = () => this.copyLink('live', 'liveLinkCopied');
+  copyReportLink = () => this.copyLink('report', 'reportLinkCopied');
+
+  goTo = (screen) => this.setState({ screen });
+  selectClient = (id) => this.setState({ screen: 'dashboard', activeClientId: id, logSegment: '', logRep: '' });
+  setRange = (range) => this.setState({ range });
+  setLogDate = (e) => this.setState({ logDate: e.target.value });
+  setLogRep = (e) => this.setState({ logRep: e.target.value });
+  setLogSegment = (e) => this.setState({ logSegment: e.target.value });
+  setLogDials = (e) => this.setState({ logDials: e.target.value });
+  setLogTalk = (e) => this.setState({ logTalk: e.target.value });
+  setLogCount = (key, val) => this.setState(s => ({ logCounts: { ...s.logCounts, [key]: val } }));
+  setNewSegName = (e) => this.setState({ newSegName: e.target.value });
+  setNewSegLogic = (e) => this.setState({ newSegLogic: e.target.value });
+  setNewSegSize = (e) => this.setState({ newSegSize: e.target.value });
+
+  addLogRow = () => {
+    const s = this.state;
+    const counts = {};
+    DISP_META.forEach(d => { counts[d.key] = Number(s.logCounts[d.key]) || 0; });
+    const clientId = s.activeClientId;
+    const segId = s.logSegment || ((this.clientsData.find(c => c.id === clientId).segments[0] || {}).id || '');
+    const row = { date: s.logDate, rep: s.logRep, segmentId: segId, dials: Number(s.logDials) || 0, talkTime: Number(s.logTalk) || 0, counts };
+    const existing = s.extraLogs[clientId] || [];
+    this.setState({
+      extraLogs: { ...s.extraLogs, [clientId]: [row, ...existing] },
+      logDials: '', logTalk: '',
+      logCounts: { meeting: '', activated: '', notNow: '', notMe: '', referred: '', noLongerWith: '', notInterested: '', dnc: '', nurture: '', nisl: '' }
+    });
+  };
+
+  addSegment = () => {
+    const s = this.state;
+    const clientId = s.activeClientId;
+    const name = (s.newSegName || '').trim();
+    if (!name) return;
+    const id = 'seg_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 24) + '_' + Date.now().toString(36).slice(-4);
+    const seg = { id, name, logic: s.newSegLogic || '', listTotal: Number(s.newSegSize) || 0, baseCounts: { ...EMPTY_COUNTS }, read: '' };
+    const existing = s.extraSegments[clientId] || [];
+    this.setState({ extraSegments: { ...s.extraSegments, [clientId]: [...existing, seg] }, newSegName: '', newSegLogic: '', newSegSize: '' });
+  };
+
+  navStyle(key, current) {
+    const active = key === current;
+    return 'display:flex;align-items:center;gap:9px;text-align:left;width:100%;border:none;border-left:3px solid ' + (active ? 'var(--db-primary)' : 'transparent') + ';cursor:pointer;padding:9px 12px 9px 9px;border-radius:6px;font-family:var(--db-font-body);font-size:13px;font-weight:' + (active ? '600' : '500') + ';background:' + (active ? 'var(--db-card-dark)' : 'transparent') + ';color:' + (active ? 'var(--db-ink-head)' : 'var(--db-ink-2)') + ';';
+  }
+
+  rangeBtnStyle(key, current) {
+    const active = key === current;
+    return 'font-family:var(--db-font-display);font-weight:600;font-size:11.5px;border:none;cursor:pointer;padding:7px 14px;border-radius:5px;background:' + (active ? 'var(--db-paper)' : 'transparent') + ';color:' + (active ? 'var(--db-primary)' : 'var(--db-muted)') + ';';
+  }
+
+  statusPill(status) {
+    const base = 'font-family:var(--db-font-display);font-weight:600;font-size:11px;letter-spacing:.02em;padding:4px 10px;border-radius:20px;';
+    if (status === 'Completed') return base + 'background:var(--db-line);color:var(--db-ink-soft);';
+    if (status === 'Active') return base + 'background:var(--db-tint-blue);color:var(--db-primary);';
+    return base + 'background:var(--db-tint-warm);color:var(--db-accent-700);';
+  }
+
+  getCountsForRange(client, range) {
+    if (range === 'all') return client.counts;
+    const scale = range === 'd30' ? 0.42 : 0.14;
+    const out = {};
+    Object.keys(client.counts).forEach(k => { out[k] = Math.max(0, Math.round(client.counts[k] * scale)); });
+    return out;
+  }
+
+  renderVals() {
+    const s = this.state;
+    const activeClientRaw = this.clientsData.find(c => c.id === s.activeClientId) || this.clientsData[0];
+    const range = s.range;
+    const counts = this.getCountsForRange(activeClientRaw, range);
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const dials = range === 'all' ? activeClientRaw.totalDials : Math.round(activeClientRaw.totalDials * (range === 'd30' ? 0.42 : 0.14));
+
+    const dispositionRows = DISP_META.map(d => {
+      const c = counts[d.key], p = pctNum(c, total), st = statusFor(d.key, p);
+      return [d.label, c, pctStr(c, total), d.benchmark, STATUS_LABEL[st]];
+    });
+
+    const maCount = counts.meeting + counts.activated, maPct = pctNum(maCount, total), maStatus = maPct >= 20 ? 'good' : 'watch';
+    const mrCount = counts.notMe + counts.referred, mrPct = pctNum(mrCount, total), mrStatus = mrPct >= 20 ? 'watch' : 'good';
+
+    const extraRowsForSegments = s.extraLogs[activeClientRaw.id] || [];
+    const rawSegments = (activeClientRaw.segments || []).concat(s.extraSegments[activeClientRaw.id] || []);
+    const computedSegments = rawSegments.map(seg => {
+      const combined = {};
+      DISP_META.forEach(d => {
+        const live = extraRowsForSegments.filter(r => r.segmentId === seg.id).reduce((a, r) => a + (r.counts[d.key] || 0), 0);
+        combined[d.key] = (seg.baseCounts[d.key] || 0) + live;
+      });
+      const logged = Object.values(combined).reduce((a, b) => a + b, 0);
+      const loggedPct = seg.listTotal ? (logged / seg.listTotal * 100).toFixed(1) : '0.0';
+      const breakdown = DISP_META.map(d => ({ label: d.label, p: pctNum(combined[d.key], logged) }))
+        .filter(b => b.p > 0).sort((a, b) => b.p - a.p).slice(0, 4)
+        .map(b => ({ label: b.label, pct: b.p.toFixed(1), barWidth: Math.min(100, b.p) + '%' }));
+      return { id: seg.id, name: seg.name, logic: seg.logic || '', listTotal: seg.listTotal, logged, loggedPct, breakdown, read: seg.read || 'Not enough tagged calls yet to read this list.' };
+    });
+
+    const activeClient = Object.assign({}, activeClientRaw, {
+      belowMinimum: activeClientRaw.totalCompleted < 200,
+      segments: computedSegments
+    });
+
+    const navDefs = [
+      { key: 'clients', label: 'Engagements', num: '01', group: 'setup' },
+      { key: 'setup', label: 'Client Setup', num: '02', group: 'setup' },
+      { key: 'log', label: 'Daily Log', num: '03', group: 'operate' },
+      { key: 'recordings', label: 'Call Recordings', num: '04', group: 'operate' },
+      { key: 'dashboard', label: 'Summary Dashboard', num: '05', group: 'analyze' },
+      { key: 'reference', label: 'Disposition Reference', num: '06', group: 'analyze' },
+      { key: 'report', label: 'Diagnostic Report', num: '07', group: 'analyze' }
+    ];
+    const navItems = navDefs.map(d => ({ label: d.label, num: d.num, group: d.group, onClick: () => this.goTo(d.key), style: this.navStyle(d.key, s.screen) }));
+    const navGroupSetup = navItems.filter(n => n.group === 'setup');
+    const navGroupOperate = navItems.filter(n => n.group === 'operate');
+    const navGroupAnalyze = navItems.filter(n => n.group === 'analyze');
+
+    const clientsList = this.clientsData.map(c => ({
+      name: c.name, location: c.location, status: c.status, window: c.window,
+      totalCompleted: c.totalCompleted, meetingActivatedPct: pctStr(c.counts.meeting + c.counts.activated, c.totalCompleted),
+      statusStyle: this.statusPill(c.status), open: () => this.selectClient(c.id)
+    }));
+
+    const effectiveLogRep = (s.logRep && activeClientRaw.reps.includes(s.logRep)) ? s.logRep : (activeClientRaw.reps[0] || '');
+    const effectiveLogSegment = s.logSegment || (rawSegments[0] ? rawSegments[0].id : '');
+    const segmentOptions = rawSegments.map(sg => ({ id: sg.id, name: sg.name }));
+    const segNameById = {};
+    rawSegments.forEach(sg => { segNameById[sg.id] = sg.name; });
+
+    const dispositionInputs = DISP_META.map(d => ({
+      label: d.label, benchmark: d.benchmark, value: s.logCounts[d.key],
+      onChange: (e) => this.setLogCount(d.key, e.target.value)
+    }));
+
+    const formCompleted = DISP_META.reduce((a, d) => a + (Number(s.logCounts[d.key]) || 0), 0);
+    const formConnectRate = (Number(s.logDials) > 0) ? (formCompleted / Number(s.logDials) * 100).toFixed(1) + '%' : '\u2014';
+
+    const extraRows = s.extraLogs[activeClientRaw.id] || [];
+    const combinedLog = [...extraRows, ...activeClientRaw.dailyLog];
+    const logColumns = ['Date', 'Rep', 'List', 'Dials', 'Completed', 'Connect Rate', 'Meeting', 'Activated', 'Not Now', 'Not Me', 'Referred', 'No Longer', 'Not Int.', 'DNC', 'Nurture', 'NISL', 'Talk (min)'];
+    const logRows = combinedLog.map(r => {
+      const completed = Object.values(r.counts).reduce((a, b) => a + b, 0);
+      const cr = r.dials > 0 ? (completed / r.dials * 100).toFixed(1) + '%' : '\u2014';
+      return [r.date, r.rep, segNameById[r.segmentId] || '\u2014', r.dials, completed, cr, r.counts.meeting, r.counts.activated, r.counts.notNow, r.counts.notMe, r.counts.referred, r.counts.noLongerWith, r.counts.notInterested, r.counts.dnc, r.counts.nurture, r.counts.nisl, r.talkTime];
+    });
+
+    const recordingsColumns = ['Date', 'Rep', 'Contact', 'Company', 'Duration (min)', 'Consent', 'Notes'];
+    const recordingsRows = activeClientRaw.recordings.map(r => [r.date, r.rep, r.contact, r.company, r.duration, r.consent, r.notes]);
+
+    const kpiCards = [
+      { label: 'Total Dials / Attempts', value: String(dials), color: 'var(--db-dark)' },
+      { label: 'Total Completed Conversations', value: String(total), color: 'var(--db-dark)' },
+      { label: 'Meetings Booked', value: String(counts.meeting), color: 'var(--db-dark)' },
+      { label: 'Raw Connect Rate', value: pctStr(total, dials), color: 'var(--db-primary)' },
+      { label: 'Meeting + Activated %', value: pctStr(maCount, total), color: STATUS_COLOR[maStatus] },
+      { label: 'Not Me + Referred %', value: pctStr(mrCount, total), color: STATUS_COLOR[mrStatus] }
+    ];
+
+    const rangeOptions = [['all', 'All-Time'], ['d30', 'Last 30 Days'], ['d7', 'Last 7 Days']].map(([key, label]) => ({
+      label, onClick: () => this.setRange(key), style: this.rangeBtnStyle(key, range)
+    }));
+    const rangeLabel = range === 'all' ? 'All-Time' : range === 'd30' ? 'Last 30 Days' : 'Last 7 Days';
+
+    const compositeCards = [
+      { label: 'Meeting + Activated (positive outcome rate)', value: pctStr(maCount, total), statusColor: STATUS_COLOR[maStatus], statusLabel: maStatus === 'good' ? 'At/above floor' : 'Below floor', benchmark: 'Floor 20% / Target 25%+' },
+      { label: 'Not Me + Referred (wrong-contact rate)', value: pctStr(mrCount, total), statusColor: STATUS_COLOR[mrStatus], statusLabel: mrStatus === 'watch' ? 'List signal' : 'Healthy', benchmark: '\u2265 20% = titles off' }
+    ];
+
+    const reportKpis = [
+      { label: 'List-driven outcomes', value: pctStr(counts.nisl + counts.notInterested + counts.nurture + counts.dnc + counts.referred + counts.notMe + counts.noLongerWith, total), sub: 'of every logged conversation' },
+      { label: 'Meeting + Activated', value: pctStr(maCount, total), sub: 'floor 20% \u00b7 target 25%+' },
+      { label: 'Meetings Booked', value: counts.meeting + ' of ' + total, sub: 'logged conversations' }
+    ];
+
+    return {
+      screenClients: s.screen === 'clients', screenSetup: s.screen === 'setup', screenLog: s.screen === 'log',
+      screenDashboard: s.screen === 'dashboard', screenRecordings: s.screen === 'recordings',
+      screenReference: s.screen === 'reference', screenReport: s.screen === 'report',
+      adminMode: s.portalView === 'admin', liveMode: s.portalView === 'live', reportMode: s.portalView === 'report',
+      clientTabIsDashboard: s.clientTab === 'dashboard', clientTabIsRecordings: s.clientTab === 'recordings',
+      tabDashboardStyle: this.rangeBtnStyle('dashboard', s.clientTab).replace('padding:7px 14px', 'padding:8px 16px'),
+      tabRecordingsStyle: this.rangeBtnStyle('recordings', s.clientTab).replace('padding:7px 14px', 'padding:8px 16px'),
+      setTabDashboard: () => this.setClientTab('dashboard'), setTabRecordings: () => this.setClientTab('recordings'),
+      previewLive: this.previewLive, previewReport: this.previewReport, exitPreview: this.exitPreview,
+      copyLiveLink: this.copyLiveLink, copyReportLink: this.copyReportLink,
+      liveLinkLabel: s.liveLinkCopied ? 'Link Copied!' : 'Copy Client Link',
+      reportLinkLabel: s.reportLinkCopied ? 'Link Copied!' : 'Copy Report Link',
+      navItems, navGroupSetup, navGroupOperate, navGroupAnalyze, activeClient, clientsList,
+      logDate: s.logDate, logRep: effectiveLogRep, logDials: s.logDials, logTalk: s.logTalk,
+      setLogDate: this.setLogDate, setLogRep: this.setLogRep, setLogDials: this.setLogDials, setLogTalk: this.setLogTalk,
+      logSegment: effectiveLogSegment, setLogSegment: this.setLogSegment, segmentOptions,
+      newSegName: s.newSegName, newSegLogic: s.newSegLogic, newSegSize: s.newSegSize,
+      setNewSegName: this.setNewSegName, setNewSegLogic: this.setNewSegLogic, setNewSegSize: this.setNewSegSize, addSegment: this.addSegment,
+      dispositionInputs, formCompleted, formConnectRate, addLogRow: this.addLogRow,
+      dailyLogTableProps: { columns: logColumns, rows: logRows },
+      rangeOptions, rangeLabel,
+      kpiCards,
+      dispositionTableProps: { columns: ['Disposition', 'Count', '% of Completed', 'Benchmark', 'Status'], rows: dispositionRows, highlightRows: dispositionRows.map((r, i) => r[4] === 'Flagged' ? i : -1).filter(i => i >= 0) },
+      compositeCards,
+      recordingsTableProps: { columns: recordingsColumns, rows: recordingsRows },
+      referenceDispTableProps: { columns: ['Disposition', 'Definition', 'Benchmark'], rows: REFERENCE_DEFS },
+      confusedPairsTableProps: { columns: ['Pair', 'Decision Rule'], rows: CONFUSED_PAIRS },
+      threeIs: THREE_IS,
+      loggingDisciplineProps: { items: ['Log every completed conversation before you hang up, or within 2 minutes. End-of-day logging from memory produces inaccurate data.'] },
+      reportKpis,
+      reportHeadline: activeClientRaw.headline || 'Keep logging \u2014 the diagnostic read will sharpen as the sample grows past 200 completed conversations.',
+      reportDistributionProps: { columns: ['Disposition', 'Count', '%', 'Signal'], rows: DISP_META.map(d => { const c = counts[d.key]; return [d.label, c, pctStr(c, total), PILLAR_MAP[d.key]]; }).sort((a, b) => b[1] - a[1]) },
+      failureModesProps: activeClientRaw.findings ? { rows: activeClientRaw.findings } : { rows: [] },
+      recommendationsProps: activeClientRaw.recommendations ? { items: activeClientRaw.recommendations } : { items: [] }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

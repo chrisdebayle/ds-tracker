@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+:root {
+  /* --- light-ground family --- */
+  --db-primary: #0a66c2;
+  --db-accent: #f97316;
+  --db-accent-700: #c85d12;
+  --db-accent-800: #a84e0f;
+  --db-dark: #1c1f24;
+  --db-ink-soft: #3a3f46;
+  --db-light: #f8fafc;
+  --db-line: #e4e7eb;
+  --db-paper: #ffffff;
+  --db-muted: #70767f;
+
+  --db-tint-blue: #f3f8fd;
+  --db-tint-warm: #fbf4ef;
+
+  /* --- dark-ground family --- */
+  --db-ground: #0b0e11;
+  --db-ground-view: #101317;
+  --db-card-dark: #171b20;
+  --db-hair-2: #22272d;
+  --db-hair-3: #262b31;
+  --db-ink-head: #f4f6f8;
+  --db-ink-body: #e8ebee;
+  --db-ink-2: #a8b0b9;
+  --db-muted-2: #7e858e;
+  --db-link-dark: #57a8ee;
+
+  --db-stage-1: #57a8ee;
+  --db-stage-2: #4c8fd6;
+  --db-stage-4: #d96a24;
+  --db-stage-5: #f97316;
+
+  /* --- status --- */
+  --db-pass: #1b6b3a;
+  --db-fail: #b4231f;
+
+  /* --- structure --- */
+  --db-spine-w: 6px;
+  --db-radius: 6px;
+
+  /* --- type --- */
+  --db-font-display: "Space Grotesk", sans-serif;
+  --db-font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --background: var(--db-light);
+  --foreground: var(--db-dark);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--db-font-body);
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--db-font-display);
+}
+
+@media print {
+  nav, .no-print {
+    display: none !important;
+  }
+}

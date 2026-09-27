@@ -1,0 +1,319 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/general/Callout/**",
+              "components/general/Changelog/**",
+              "components/general/ColorTable/**",
+              "components/general/DemoDark/**",
+              "components/general/DoDontGrid/**",
+              "components/general/Enemy/**",
+              "components/general/Footer/**",
+              "components/general/Hero/**",
+              "components/general/InternalBadge/**",
+              "components/general/Lines/**",
+              "components/general/MilestoneTable/**",
+              "components/general/Rail/**",
+              "components/general/RulesList/**",
+              "components/general/Section/**",
+              "components/general/SpineFrame/**",
+              "components/general/StanceGrid/**",
+              "components/general/StepLadder/**",
+              "components/general/Swatch/**",
+              "components/general/SwatchGrid/**",
+              "components/general/TraitMap/**",
+              "components/general/TypeSpec/**",
+              "components/general/VerbalBlock/**",
+              "components/general/VerbalBlockGrid/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Space Grotesk|Inter))/i]",
+        "message": "Font not provided by the design system. Available: Space Grotesk, Inter."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Callout'] > JSXAttribute > JSXIdentifier[name!=/^(?:ground|source|children|className|key|ref|className|style|children)$/]",
+        "message": "<Callout> doesn't accept that prop. Declared props: ground, source, children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Callout'] > JSXAttribute[name.name='ground'] > Literal[value!=/^(?:light|dark|blue)$/]",
+        "message": "<Callout> ground must be one of 'light' | 'dark' | 'blue'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Changelog'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|entries|className|key|ref|className|style|children)$/]",
+        "message": "<Changelog> doesn't accept that prop. Declared props: label, entries, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ColorTable'] > JSXAttribute > JSXIdentifier[name!=/^(?:rows|className|key|ref|className|style|children)$/]",
+        "message": "<ColorTable> doesn't accept that prop. Declared props: rows, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DemoDark'] > JSXAttribute > JSXIdentifier[name!=/^(?:lede|children|caption|className|key|ref|className|style|children)$/]",
+        "message": "<DemoDark> doesn't accept that prop. Declared props: lede, children, caption, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DoDontGrid'] > JSXAttribute > JSXIdentifier[name!=/^(?:doLabel|doItems|dontLabel|dontItems|className|key|ref|className|style|children)$/]",
+        "message": "<DoDontGrid> doesn't accept that prop. Declared props: doLabel, doItems, dontLabel, dontItems, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Enemy'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|children|className|key|ref|className|style|children)$/]",
+        "message": "<Enemy> doesn't accept that prop. Declared props: label, children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Footer'] > JSXAttribute > JSXIdentifier[name!=/^(?:links|signature|children|className|key|ref|className|style|children)$/]",
+        "message": "<Footer> doesn't accept that prop. Declared props: links, signature, children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Hero'] > JSXAttribute > JSXIdentifier[name!=/^(?:eyebrow|title|titleAccent|tagline|deck|meta|version|nav|className|key|ref|className|style|children)$/]",
+        "message": "<Hero> doesn't accept that prop. Declared props: eyebrow, title, titleAccent, tagline, deck, meta, version, nav, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='InternalBadge'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|className|key|ref|className|style|children)$/]",
+        "message": "<InternalBadge> doesn't accept that prop. Declared props: children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Lines'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|className|key|ref|className|style|children)$/]",
+        "message": "<Lines> doesn't accept that prop. Declared props: items, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MilestoneTable'] > JSXAttribute > JSXIdentifier[name!=/^(?:markHeading|nameHeading|proofHeading|rows|className|key|ref|className|style|children)$/]",
+        "message": "<MilestoneTable> doesn't accept that prop. Declared props: markHeading, nameHeading, proofHeading, rows, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Rail'] > JSXAttribute > JSXIdentifier[name!=/^(?:stages|className|key|ref|className|style|children)$/]",
+        "message": "<Rail> doesn't accept that prop. Declared props: stages, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RulesList'] > JSXAttribute > JSXIdentifier[name!=/^(?:items|variant|className|key|ref|className|style|children)$/]",
+        "message": "<RulesList> doesn't accept that prop. Declared props: items, variant, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RulesList'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:check|hard)$/]",
+        "message": "<RulesList> variant must be one of 'check' | 'hard'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Section'] > JSXAttribute > JSXIdentifier[name!=/^(?:id|number|label|title|subtitle|children|className|key|ref|className|style|children)$/]",
+        "message": "<Section> doesn't accept that prop. Declared props: id, number, label, title, subtitle, children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SpineFrame'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|className|key|ref|className|style|children)$/]",
+        "message": "<SpineFrame> doesn't accept that prop. Declared props: children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StanceGrid'] > JSXAttribute > JSXIdentifier[name!=/^(?:forLabel|forItems|againstLabel|againstItems|againstSecondaryLabel|againstSecondaryItems|className|key|ref|className|style|children)$/]",
+        "message": "<StanceGrid> doesn't accept that prop. Declared props: forLabel, forItems, againstLabel, againstItems, againstSecondaryLabel, againstSecondaryItems, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StepLadder'] > JSXAttribute > JSXIdentifier[name!=/^(?:steps|activeIndex|className|key|ref|className|style|children)$/]",
+        "message": "<StepLadder> doesn't accept that prop. Declared props: steps, activeIndex, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Swatch'] > JSXAttribute > JSXIdentifier[name!=/^(?:role|hex|className|key|ref|className|style|children)$/]",
+        "message": "<Swatch> doesn't accept that prop. Declared props: role, hex, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SwatchGrid'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|className|key|ref|className|style|children)$/]",
+        "message": "<SwatchGrid> doesn't accept that prop. Declared props: children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TraitMap'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|description|rows|internal|internalBadgeText|className|key|ref|className|style|children)$/]",
+        "message": "<TraitMap> doesn't accept that prop. Declared props: label, description, rows, internal, internalBadgeText, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TypeSpec'] > JSXAttribute > JSXIdentifier[name!=/^(?:rows|className|key|ref|className|style|children)$/]",
+        "message": "<TypeSpec> doesn't accept that prop. Declared props: rows, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='VerbalBlock'] > JSXAttribute > JSXIdentifier[name!=/^(?:title|meta|emphasizedBody|children|className|key|ref|className|style|children)$/]",
+        "message": "<VerbalBlock> doesn't accept that prop. Declared props: title, meta, emphasizedBody, children, className."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='VerbalBlockGrid'] > JSXAttribute > JSXIdentifier[name!=/^(?:children|className|key|ref|className|style|children)$/]",
+        "message": "<VerbalBlockGrid> doesn't accept that prop. Declared props: children, className."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "Callout": {
+        "replaces": []
+      },
+      "Changelog": {
+        "replaces": []
+      },
+      "ColorTable": {
+        "replaces": []
+      },
+      "DemoDark": {
+        "replaces": []
+      },
+      "DoDontGrid": {
+        "replaces": []
+      },
+      "Enemy": {
+        "replaces": []
+      },
+      "Footer": {
+        "replaces": []
+      },
+      "Hero": {
+        "replaces": []
+      },
+      "InternalBadge": {
+        "replaces": []
+      },
+      "Lines": {
+        "replaces": []
+      },
+      "MilestoneTable": {
+        "replaces": []
+      },
+      "Rail": {
+        "replaces": []
+      },
+      "RulesList": {
+        "replaces": []
+      },
+      "Section": {
+        "replaces": []
+      },
+      "SpineFrame": {
+        "replaces": []
+      },
+      "StanceGrid": {
+        "replaces": []
+      },
+      "StepLadder": {
+        "replaces": []
+      },
+      "Swatch": {
+        "replaces": []
+      },
+      "SwatchGrid": {
+        "replaces": []
+      },
+      "TraitMap": {
+        "replaces": []
+      },
+      "TypeSpec": {
+        "replaces": []
+      },
+      "VerbalBlock": {
+        "replaces": []
+      },
+      "VerbalBlockGrid": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--db-accent",
+      "--db-accent-700",
+      "--db-accent-800",
+      "--db-card-dark",
+      "--db-dark",
+      "--db-fail",
+      "--db-font-body",
+      "--db-font-display",
+      "--db-ground",
+      "--db-ground-view",
+      "--db-hair-2",
+      "--db-hair-3",
+      "--db-ink-2",
+      "--db-ink-body",
+      "--db-ink-head",
+      "--db-ink-soft",
+      "--db-light",
+      "--db-line",
+      "--db-link-dark",
+      "--db-muted",
+      "--db-muted-2",
+      "--db-paper",
+      "--db-pass",
+      "--db-primary",
+      "--db-radius",
+      "--db-spine-w",
+      "--db-stage-1",
+      "--db-stage-2",
+      "--db-stage-4",
+      "--db-stage-5",
+      "--db-tint-blue",
+      "--db-tint-warm"
+    ],
+    "tokenKinds": {
+      "--db-primary": "color",
+      "--db-accent": "color",
+      "--db-accent-700": "color",
+      "--db-accent-800": "color",
+      "--db-dark": "color",
+      "--db-ink-soft": "color",
+      "--db-light": "color",
+      "--db-line": "color",
+      "--db-paper": "color",
+      "--db-muted": "color",
+      "--db-tint-blue": "color",
+      "--db-tint-warm": "color",
+      "--db-ground": "color",
+      "--db-ground-view": "color",
+      "--db-card-dark": "color",
+      "--db-hair-2": "color",
+      "--db-hair-3": "color",
+      "--db-ink-head": "color",
+      "--db-ink-body": "color",
+      "--db-ink-2": "color",
+      "--db-muted-2": "color",
+      "--db-link-dark": "color",
+      "--db-stage-1": "color",
+      "--db-stage-2": "color",
+      "--db-stage-4": "color",
+      "--db-stage-5": "color",
+      "--db-pass": "color",
+      "--db-fail": "color",
+      "--db-spine-w": "spacing",
+      "--db-radius": "radius",
+      "--db-font-display": "font",
+      "--db-font-body": "font"
+    },
+    "fontFamilies": [
+      "Inter",
+      "Space Grotesk"
+    ]
+  }
+}
