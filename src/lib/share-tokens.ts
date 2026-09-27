@@ -12,17 +12,19 @@ export function generateToken(): string {
   return randomBytes(24).toString("base64url");
 }
 
+/**
+ * Returns the engagement's current share link for `kind`, creating one only
+ * if none exists yet. A REVOKED link is returned as-is (with revokedAt set)
+ * rather than silently resurrected — callers must check `revokedAt` and use
+ * regenerateShareLink() to explicitly issue a new one. This function is
+ * called on every Dashboard/Report page render, so it must never itself
+ * un-revoke a link or "Revoke" would never stick.
+ */
 export async function getOrCreateShareLink(engagementId: string, kind: "live" | "report") {
   const [existing] = await db
     .select()
     .from(shareLinks)
-    .where(
-      and(
-        eq(shareLinks.engagementId, engagementId),
-        eq(shareLinks.kind, kind),
-        isNull(shareLinks.revokedAt)
-      )
-    )
+    .where(and(eq(shareLinks.engagementId, engagementId), eq(shareLinks.kind, kind)))
     .limit(1);
 
   if (existing) return existing;
@@ -30,13 +32,18 @@ export async function getOrCreateShareLink(engagementId: string, kind: "live" | 
   const [created] = await db
     .insert(shareLinks)
     .values({ engagementId, kind, token: generateToken() })
-    .onConflictDoUpdate({
-      target: [shareLinks.engagementId, shareLinks.kind],
-      set: { token: generateToken(), revokedAt: null },
-    })
+    .onConflictDoNothing({ target: [shareLinks.engagementId, shareLinks.kind] })
     .returning();
 
-  return created;
+  if (created) return created;
+
+  // Lost an insert race — re-select the row the other request created.
+  const [row] = await db
+    .select()
+    .from(shareLinks)
+    .where(and(eq(shareLinks.engagementId, engagementId), eq(shareLinks.kind, kind)))
+    .limit(1);
+  return row;
 }
 
 export async function regenerateShareLink(engagementId: string, kind: "live" | "report") {

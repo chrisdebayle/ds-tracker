@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getEngagement, getRecordings, getReps } from "@/db/queries";
 import { addRecording } from "../../../actions";
 import { DataTable, Field, inputClass, Button, Card } from "@/components/ui";
+import { nameById } from "@/lib/lookup";
 
 export default async function RecordingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,7 +10,7 @@ export default async function RecordingsPage({ params }: { params: Promise<{ id:
   if (!engagement) notFound();
 
   const [repList, recordingList] = await Promise.all([getReps(id), getRecordings(id)]);
-  const repName = (repId: string | null) => repList.find((r) => r.id === repId)?.name ?? "—";
+  const repName = nameById(repList);
   const action = addRecording.bind(null, id);
 
   return (

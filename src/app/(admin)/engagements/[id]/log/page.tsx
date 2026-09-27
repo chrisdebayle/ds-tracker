@@ -4,6 +4,7 @@ import { addLogEntry } from "../../../actions";
 import { LogForm } from "@/components/log-form";
 import { DataTable } from "@/components/ui";
 import { DISP_META, rawConnectRate, totalCompleted } from "@/lib/disposition";
+import { nameById } from "@/lib/lookup";
 
 export default async function DailyLogPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,8 +17,8 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
     getDailyLog(id),
   ]);
 
-  const repName = (repId: string) => repList.find((r) => r.id === repId)?.name ?? "—";
-  const segName = (segId: string) => segmentList.find((s) => s.id === segId)?.name ?? "—";
+  const repName = nameById(repList);
+  const segName = nameById(segmentList);
 
   const action = addLogEntry.bind(null, id);
 

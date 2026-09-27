@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEngagement, getEngagementCounts, getSegmentBreakdown } from "@/db/queries";
 import { getOrCreateShareLink } from "@/lib/share-tokens";
 import { getSiteOrigin } from "@/lib/site-url";
-import { CopyLinkButton } from "@/components/copy-link-button";
+import { ShareLinkControls } from "@/components/share-link-controls";
 import { ReportView } from "@/components/report-view";
-import { updateReportContent } from "../../../actions";
+import { regenerateShareLinkAction, revokeShareLinkAction, updateReportContent } from "../../../actions";
 import { Field, inputClass, Button, Card } from "@/components/ui";
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,14 +21,20 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
 
   const reportUrl = `${origin}/portal/report/${reportLink.token}`;
   const action = updateReportContent.bind(null, id);
+  const revokeReport = revokeShareLinkAction.bind(null, id, "report");
+  const regenerateReport = regenerateShareLinkAction.bind(null, id, "report");
 
   return (
     <div className="flex flex-col gap-10">
       <div className="flex items-center justify-end gap-2 no-print">
-        <Link href={reportUrl} target="_blank" className="text-[13px] font-semibold text-[var(--db-primary)] self-center">
-          Preview Report
-        </Link>
-        <CopyLinkButton label="Copy Report Link" url={reportUrl} />
+        <ShareLinkControls
+          label="Copy Report Link"
+          previewLabel="Preview Report"
+          url={reportUrl}
+          revoked={!!reportLink.revokedAt}
+          onRevoke={revokeReport}
+          onRegenerate={regenerateReport}
+        />
         <a
           href={`/engagements/${id}/report/print`}
           target="_blank"

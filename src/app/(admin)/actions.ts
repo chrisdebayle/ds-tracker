@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { dailyLogEntries, engagements, recordings, reps, segments } from "@/db/schema";
 import { EMPTY_COUNTS, DISPOSITION_KEYS, type DispositionCounts } from "@/lib/disposition";
 import { getOrCreateShareLink, regenerateShareLink, revokeShareLink } from "@/lib/share-tokens";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -22,6 +22,22 @@ function countsFromForm(formData: FormData): DispositionCounts {
     counts[key] = raw ? Math.max(0, parseInt(String(raw), 10) || 0) : 0;
   }
   return counts;
+}
+
+const SAFE_URL_SCHEME = /^https?:\/\//i;
+
+async function assertBelongsToEngagement(
+  table: typeof segments | typeof reps,
+  id: string,
+  engagementId: string,
+  what: string
+) {
+  const [row] = await db
+    .select({ id: table.id })
+    .from(table)
+    .where(and(eq(table.id, id), eq(table.engagementId, engagementId)))
+    .limit(1);
+  if (!row) throw new Error(`${what} does not belong to this engagement`);
 }
 
 export async function createEngagement(formData: FormData) {
@@ -98,11 +114,19 @@ export async function addSegment(engagementId: string, formData: FormData) {
 export async function addLogEntry(engagementId: string, formData: FormData) {
   await requireAdmin();
 
+  const segmentId = String(formData.get("segmentId") ?? "");
+  const repId = String(formData.get("repId") ?? "");
+  const date = String(formData.get("date") ?? "");
+  if (!segmentId || !repId || !date) throw new Error("Date, rep, and target list are required");
+
+  await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
+  await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
+
   await db.insert(dailyLogEntries).values({
     engagementId,
-    segmentId: String(formData.get("segmentId")),
-    repId: String(formData.get("repId")),
-    date: String(formData.get("date")),
+    segmentId,
+    repId,
+    date,
     dials: Math.max(0, parseInt(String(formData.get("dials") ?? "0"), 10) || 0),
     talkTimeMinutes: Math.max(0, parseInt(String(formData.get("talkTime") ?? "0"), 10) || 0),
     counts: countsFromForm(formData),
@@ -116,12 +140,17 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
 export async function addRecording(engagementId: string, formData: FormData) {
   await requireAdmin();
   const url = String(formData.get("url") ?? "").trim();
-  if (!url) return;
+  const date = String(formData.get("date") ?? "");
+  if (!url || !date) return;
+  if (!SAFE_URL_SCHEME.test(url)) throw new Error("Recording link must be an http(s) URL");
+
+  const repId = formData.get("repId") ? String(formData.get("repId")) : null;
+  if (repId) await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
 
   await db.insert(recordings).values({
     engagementId,
-    date: String(formData.get("date")),
-    repId: formData.get("repId") ? String(formData.get("repId")) : null,
+    date,
+    repId,
     contact: String(formData.get("contact") ?? "").trim(),
     company: String(formData.get("company") ?? "").trim(),
     durationMinutes: Math.max(0, parseInt(String(formData.get("duration") ?? "0"), 10) || 0),

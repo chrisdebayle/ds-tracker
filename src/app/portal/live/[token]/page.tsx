@@ -10,6 +10,7 @@ import {
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
 import { DataTable } from "@/components/ui";
+import { nameById } from "@/lib/lookup";
 
 const RANGES: { key: Range; label: string }[] = [
   { key: "all", label: "All-Time" },
@@ -95,10 +96,15 @@ async function DashboardTab({
   base: string;
   range: Range;
 }) {
-  const [{ counts, dials, totalCompleted: completed }, segmentBreakdown] = await Promise.all([
+  const [{ counts, dials, totalCompleted: completed }, allTime, segmentBreakdown] = await Promise.all([
     getEngagementCounts(engagementId, range),
+    range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all"),
     getSegmentBreakdown(engagementId),
   ]);
+
+  // The 200-conversation minimum is an all-time engagement maturity gate, not
+  // a per-range one — otherwise it falsely fires on nearly every 7d/30d view.
+  const allTimeCompleted = allTime ? allTime.totalCompleted : completed;
 
   return (
     <div>
@@ -119,7 +125,7 @@ async function DashboardTab({
       </div>
 
       <KpiStrip counts={counts} dials={dials} />
-      <BelowMinimumBanner completed={completed} />
+      <BelowMinimumBanner completed={allTimeCompleted} />
 
       <div className="mb-8">
         <h2 className="font-display text-[16px] font-semibold text-[var(--db-dark)] mb-3">
@@ -138,6 +144,11 @@ async function DashboardTab({
       <div>
         <h2 className="font-display text-[16px] font-semibold text-[var(--db-dark)] mb-3">
           Segment Breakdown
+          {range !== "all" && (
+            <span className="text-[11px] font-normal text-[var(--db-muted)] ml-2">
+              (always shows all-time totals, not the selected range)
+            </span>
+          )}
         </h2>
         <SegmentBreakdownCards breakdown={segmentBreakdown} showLogic={false} />
       </div>
@@ -147,7 +158,7 @@ async function DashboardTab({
 
 async function RecordingsTab({ engagementId }: { engagementId: string }) {
   const [recordingList, repList] = await Promise.all([getRecordings(engagementId), getReps(engagementId)]);
-  const repName = (repId: string | null) => repList.find((r) => r.id === repId)?.name ?? "—";
+  const repName = nameById(repList);
 
   if (recordingList.length === 0) {
     return <p className="text-sm text-[var(--db-muted)]">No recordings logged yet.</p>;

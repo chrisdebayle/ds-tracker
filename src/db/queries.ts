@@ -45,9 +45,12 @@ export async function getRecordings(engagementId: string) {
 function rangeStartDate(range: Range): string | null {
   if (range === "all") return null;
   const days = range === "30d" ? 30 : 7;
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10);
+  // Do the subtraction in UTC (matching how `date` values are entered, e.g.
+  // new Date().toISOString().slice(0, 10)) — mixing local-time subtraction
+  // with a UTC serialization can shift the window by a day near midnight.
+  const now = new Date();
+  const utcMidnight = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return new Date(utcMidnight - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 /** Total counts for an engagement across all segments: base + logged entries, filtered by range. */

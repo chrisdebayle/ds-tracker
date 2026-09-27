@@ -57,7 +57,10 @@ export function ReportView({
           <KpiCard label="Raw Connect Rate" value={`${rawConnectRate(completed, dials).toFixed(1)}%`} />
           <KpiCard label="Meeting + Activated %" value={`${meetingActivatedPct(counts).toFixed(1)}%`} />
         </div>
-        {headlineQuote && <Callout>{headlineQuote}</Callout>}
+        <Callout>
+          {headlineQuote ||
+            "Keep logging — the diagnostic read will sharpen as the sample grows past 200 completed conversations."}
+        </Callout>
       </Section>
 
       <Section number="02" label="Distribution" title="Disposition breakdown">
