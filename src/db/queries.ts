@@ -68,10 +68,11 @@ export async function getEngagementCounts(engagementId: string, range: Range = "
   let dials = 0;
   let talkTime = 0;
 
-  // base counts only apply to the all-time view (they represent pre-tool history)
+  // base counts/dials only apply to the all-time view (they represent pre-tool history)
   if (range === "all") {
     for (const seg of segs) {
       counts = sumCounts(counts, seg.baseCounts);
+      dials += seg.baseDials;
     }
   }
   for (const row of logRows) {

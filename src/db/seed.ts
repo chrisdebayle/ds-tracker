@@ -1,4 +1,3 @@
-import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { db } from "./index";
 import { dailyLogEntries, engagements, recordings, reps, segments, users } from "./schema";
@@ -85,6 +84,10 @@ async function main() {
         listTotal: 300,
         logic:
           "Multi-location DSOs sourced for high call volume; 15+ chairs across locations, verified multi-site status required.",
+        // Historical dials attributable to this segment before the tool was adopted, derived
+        // from the client's all-time 3,120 dials minus what this run's daily log accounts for,
+        // split proportionally by each segment's share of pre-tool completed conversations.
+        baseDials: 1225,
         baseCounts: { ...zero, activated: 1, notNow: 6, referred: 24, notInterested: 13, nurture: 9, nisl: 66 },
       },
       {
@@ -92,6 +95,7 @@ async function main() {
         name: "Outpatient Groups",
         listTotal: 218,
         logic: "Multi-provider outpatient groups; targets Office Manager or Practice Administrator titles.",
+        baseDials: 927,
         baseCounts: { ...zero, activated: 2, notNow: 4, referred: 10, notInterested: 17, nurture: 38, nisl: 19 },
       },
       {
@@ -99,6 +103,7 @@ async function main() {
         name: "Private Medical Practice",
         listTotal: 646,
         logic: "Independent solo and small-group medical practices; sourced primarily from public directories.",
+        baseDials: 680,
         baseCounts: {
           ...zero,
           meeting: 1,

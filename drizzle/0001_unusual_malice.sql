@@ -1,0 +1,1 @@
+ALTER TABLE "segments" ADD COLUMN "base_dials" integer DEFAULT 0 NOT NULL;

@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "dotenv run -f .env.local -- tsx src/db/seed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
