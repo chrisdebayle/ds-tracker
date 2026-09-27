@@ -25,6 +25,13 @@ function countsFromForm(formData: FormData): DispositionCounts {
 }
 
 const SAFE_URL_SCHEME = /^https?:\/\//i;
+const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
+
+function requireDate(value: FormDataEntryValue | null, field: string): string {
+  const str = String(value ?? "");
+  if (!DATE_FORMAT.test(str)) throw new Error(`${field} must be a valid date`);
+  return str;
+}
 
 async function assertBelongsToEngagement(
   table: typeof segments | typeof reps,
@@ -49,8 +56,10 @@ export async function createEngagement(formData: FormData) {
       name: String(formData.get("name") ?? "").trim(),
       location: String(formData.get("location") ?? "").trim(),
       status: (formData.get("status") as "active" | "paused" | "completed") ?? "active",
-      startDate: String(formData.get("startDate") ?? new Date().toISOString().slice(0, 10)),
-      endDate: formData.get("endDate") ? String(formData.get("endDate")) : null,
+      startDate: formData.get("startDate")
+        ? requireDate(formData.get("startDate"), "Start date")
+        : new Date().toISOString().slice(0, 10),
+      endDate: formData.get("endDate") ? requireDate(formData.get("endDate"), "End date") : null,
       owner: String(formData.get("owner") ?? "").trim(),
       dialers: String(formData.get("dialers") ?? "").trim(),
       sowReference: String(formData.get("sowReference") ?? "").trim(),
@@ -72,8 +81,8 @@ export async function updateEngagement(engagementId: string, formData: FormData)
       name: String(formData.get("name") ?? "").trim(),
       location: String(formData.get("location") ?? "").trim(),
       status: (formData.get("status") as "active" | "paused" | "completed") ?? "active",
-      startDate: String(formData.get("startDate") ?? ""),
-      endDate: formData.get("endDate") ? String(formData.get("endDate")) : null,
+      startDate: requireDate(formData.get("startDate"), "Start date"),
+      endDate: formData.get("endDate") ? requireDate(formData.get("endDate"), "End date") : null,
       owner: String(formData.get("owner") ?? "").trim(),
       dialers: String(formData.get("dialers") ?? "").trim(),
       sowReference: String(formData.get("sowReference") ?? "").trim(),
@@ -116,8 +125,8 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
 
   const segmentId = String(formData.get("segmentId") ?? "");
   const repId = String(formData.get("repId") ?? "");
-  const date = String(formData.get("date") ?? "");
-  if (!segmentId || !repId || !date) throw new Error("Date, rep, and target list are required");
+  if (!segmentId || !repId) throw new Error("Rep and target list are required");
+  const date = requireDate(formData.get("date"), "Date");
 
   await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
   await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
@@ -140,9 +149,9 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
 export async function addRecording(engagementId: string, formData: FormData) {
   await requireAdmin();
   const url = String(formData.get("url") ?? "").trim();
-  const date = String(formData.get("date") ?? "");
-  if (!url || !date) return;
+  if (!url) return;
   if (!SAFE_URL_SCHEME.test(url)) throw new Error("Recording link must be an http(s) URL");
+  const date = requireDate(formData.get("date"), "Date");
 
   const repId = formData.get("repId") ? String(formData.get("repId")) : null;
   if (repId) await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
