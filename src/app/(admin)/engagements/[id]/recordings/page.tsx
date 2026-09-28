@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEngagement, getRecordings, getReps } from "@/db/queries";
 import { addRecording } from "../../../actions";
@@ -61,7 +62,7 @@ export default async function RecordingsPage({ params }: { params: Promise<{ id:
         <p className="text-sm text-[var(--db-muted)]">No recordings logged yet.</p>
       ) : (
         <DataTable
-          columns={["Date", "Rep", "Contact", "Company", "Duration (min)", "Consent", "Notes", "Link"]}
+          columns={["Date", "Rep", "Contact", "Company", "Duration (min)", "Consent", "Notes", "Link", ""]}
           rows={recordingList.map((r) => [
             r.date,
             repName(r.repId),
@@ -70,9 +71,16 @@ export default async function RecordingsPage({ params }: { params: Promise<{ id:
             r.durationMinutes,
             r.consent ? "Yes" : "No",
             r.notes,
-            <a key={r.id} href={r.url} target="_blank" className="text-[var(--db-primary)] font-semibold">
+            <a key={`${r.id}-open`} href={r.url} target="_blank" rel="noopener noreferrer" className="text-[var(--db-primary)] font-semibold">
               Open
             </a>,
+            <Link
+              key={`${r.id}-edit`}
+              href={`/engagements/${id}/recordings/${r.id}/edit`}
+              className="text-[var(--db-ink-soft)] font-semibold hover:text-[var(--db-primary)]"
+            >
+              Edit
+            </Link>,
           ])}
         />
       )}

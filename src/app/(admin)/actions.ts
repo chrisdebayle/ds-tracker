@@ -34,7 +34,7 @@ function requireDate(value: FormDataEntryValue | null, field: string): string {
 }
 
 async function assertBelongsToEngagement(
-  table: typeof segments | typeof reps,
+  table: typeof segments | typeof reps | typeof recordings,
   id: string,
   engagementId: string,
   what: string
@@ -183,6 +183,36 @@ export async function addRecording(engagementId: string, formData: FormData) {
   });
 
   revalidatePath(`/engagements/${engagementId}/recordings`);
+}
+
+export async function updateRecording(engagementId: string, recordingId: string, formData: FormData) {
+  await requireAdmin();
+  await assertBelongsToEngagement(recordings, recordingId, engagementId, "Recording");
+
+  const url = String(formData.get("url") ?? "").trim();
+  if (!url) throw new Error("Recording link is required");
+  if (!SAFE_URL_SCHEME.test(url)) throw new Error("Recording link must be an http(s) URL");
+  const date = requireDate(formData.get("date"), "Date");
+
+  const repId = formData.get("repId") ? String(formData.get("repId")) : null;
+  if (repId) await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
+
+  await db
+    .update(recordings)
+    .set({
+      date,
+      repId,
+      contact: String(formData.get("contact") ?? "").trim(),
+      company: String(formData.get("company") ?? "").trim(),
+      durationMinutes: Math.max(0, parseInt(String(formData.get("duration") ?? "0"), 10) || 0),
+      consent: formData.get("consent") === "on",
+      notes: String(formData.get("notes") ?? "").trim(),
+      url,
+    })
+    .where(eq(recordings.id, recordingId));
+
+  revalidatePath(`/engagements/${engagementId}/recordings`);
+  redirect(`/engagements/${engagementId}/recordings`);
 }
 
 export async function updateReportContent(engagementId: string, formData: FormData) {

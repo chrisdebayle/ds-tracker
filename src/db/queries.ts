@@ -42,6 +42,15 @@ export async function getRecordings(engagementId: string) {
     .orderBy(desc(recordings.date));
 }
 
+export async function getRecording(engagementId: string, recordingId: string) {
+  const [row] = await db
+    .select()
+    .from(recordings)
+    .where(and(eq(recordings.id, recordingId), eq(recordings.engagementId, engagementId)))
+    .limit(1);
+  return row ?? null;
+}
+
 function rangeStartDate(range: Range): string | null {
   if (range === "all") return null;
   const days = range === "30d" ? 30 : 7;

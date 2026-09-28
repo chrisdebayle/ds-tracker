@@ -172,7 +172,7 @@ async function RecordingsTab({ engagementId }: { engagementId: string }) {
 
   return (
     <DataTable
-      columns={["Date", "Rep", "Contact", "Company", "Duration (min)", "Consent", "Notes"]}
+      columns={["Date", "Rep", "Contact", "Company", "Duration (min)", "Consent", "Notes", "Link"]}
       rows={recordingList.map((r) => [
         r.date,
         repName(r.repId),
@@ -181,6 +181,9 @@ async function RecordingsTab({ engagementId }: { engagementId: string }) {
         r.durationMinutes,
         r.consent ? "Yes" : "No",
         r.notes,
+        <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer" className="text-[var(--db-primary)] font-semibold">
+          Open
+        </a>,
       ])}
     />
   );
