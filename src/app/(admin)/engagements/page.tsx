@@ -38,7 +38,7 @@ export default async function EngagementsPage() {
           <Link
             key={engagement.id}
             href={`/engagements/${engagement.id}/dashboard`}
-            className="grid items-center gap-4 bg-white border border-[var(--db-line)] rounded-[var(--db-radius)] px-5 py-4 hover:border-[var(--db-primary)] transition-colors"
+            className="grid items-center gap-4 bg-[var(--db-paper)] border border-[var(--db-line)] rounded-[var(--db-radius)] px-5 py-4 hover:border-[var(--db-primary)] transition-colors"
             style={{ gridTemplateColumns: "2.2fr 1fr 1.5fr 1fr 1.1fr auto" }}
           >
             <div>

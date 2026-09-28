@@ -109,7 +109,7 @@ export function DataTable({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-t border-[var(--db-line)] odd:bg-white even:bg-[var(--db-light)]">
+            <tr key={i} className="border-t border-[var(--db-line)] odd:bg-[var(--db-paper)] even:bg-[var(--db-light)]">
               {row.map((cell, j) => (
                 <td key={j} className="px-3 py-2 whitespace-nowrap">
                   {cell}

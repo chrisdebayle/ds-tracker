@@ -74,7 +74,7 @@ export default async function DashboardPage({
             className={`px-3 py-1.5 rounded-full text-[12px] font-semibold ${
               range === r.key
                 ? "bg-[var(--db-primary)] text-white"
-                : "bg-white border border-[var(--db-line)] text-[var(--db-ink-soft)]"
+                : "bg-[var(--db-paper)] border border-[var(--db-line)] text-[var(--db-ink-soft)]"
             }`}
           >
             {r.label}
