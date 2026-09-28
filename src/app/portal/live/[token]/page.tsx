@@ -60,23 +60,23 @@ export default async function LivePortalPage({
           </span>
         </header>
 
-        <nav className="flex gap-1 mb-6">
+        <nav className="flex gap-2 mb-6">
           <Link
             href={`${base}?tab=dashboard`}
-            className={`px-3 py-2 text-[13px] font-medium border-b-2 ${
+            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
               tab === "dashboard"
-                ? "border-[var(--db-primary)] text-[var(--db-primary)]"
-                : "border-transparent text-[var(--db-ink-soft)]"
+                ? "bg-[var(--db-primary)] text-white"
+                : "bg-[var(--db-paper)] border border-[var(--db-line)] text-[var(--db-ink-soft)] hover:border-[var(--db-primary)]"
             }`}
           >
             Summary Dashboard
           </Link>
           <Link
             href={`${base}?tab=recordings`}
-            className={`px-3 py-2 text-[13px] font-medium border-b-2 ${
+            className={`rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
               tab === "recordings"
-                ? "border-[var(--db-primary)] text-[var(--db-primary)]"
-                : "border-transparent text-[var(--db-ink-soft)]"
+                ? "bg-[var(--db-primary)] text-white"
+                : "bg-[var(--db-paper)] border border-[var(--db-line)] text-[var(--db-ink-soft)] hover:border-[var(--db-primary)]"
             }`}
           >
             Call Recordings
