@@ -8,6 +8,7 @@ import {
 } from "@/lib/disposition";
 import { Callout, Card, DataTable, KpiCard, Section, StatusPill } from "@/components/ui";
 import { SegmentBreakdownCards } from "@/components/dashboard-blocks";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export interface ReportSegment {
   segment: { id: string; name: string; listTotal: number; logic: string | null; read: string | null };
@@ -25,6 +26,7 @@ export function ReportView({
   findings,
   nextSteps,
   segmentBreakdown,
+  showThemeToggle = false,
 }: {
   eyebrow: string;
   clientName: string;
@@ -34,6 +36,10 @@ export function ReportView({
   findings?: string[] | null;
   nextSteps?: string[] | null;
   segmentBreakdown: ReportSegment[];
+  /** Only the standalone client-facing portal report has no surrounding
+   * chrome to host a toggle — the admin report page has one in its sidebar,
+   * and the print route should never show one. */
+  showThemeToggle?: boolean;
 }) {
   const completed = totalCompleted(counts);
   const below = completed < MIN_SAMPLE_SIZE;
@@ -41,12 +47,19 @@ export function ReportView({
 
   return (
     <div className="max-w-[960px] mx-auto">
-      <header className="mb-10 border-b border-[var(--db-line)] pb-6">
-        <div className="text-[11px] uppercase tracking-widest text-[var(--db-primary)] font-semibold mb-2">
-          {eyebrow}
+      <header className="mb-10 border-b border-[var(--db-line)] pb-6 flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[11px] uppercase tracking-widest text-[var(--db-primary)] font-semibold mb-2">
+            {eyebrow}
+          </div>
+          <h1 className="font-display text-[26px] font-semibold text-[var(--db-dark)]">{clientName}</h1>
+          <div className="text-[13px] text-[var(--db-muted)] mt-1">{window}</div>
         </div>
-        <h1 className="font-display text-[26px] font-semibold text-[var(--db-dark)]">{clientName}</h1>
-        <div className="text-[13px] text-[var(--db-muted)] mt-1">{window}</div>
+        {showThemeToggle && (
+          <span className="no-print">
+            <ThemeToggle />
+          </span>
+        )}
       </header>
 
       <Section number="01" label="Snapshot" title="Engagement at a glance">

@@ -2,9 +2,8 @@
 @import "tailwindcss";
 
 :root {
-  /* --- light-ground family --- */
+  /* --- content-surface family: theme-switchable (see [data-theme="dark"] below) --- */
   --db-primary: #0a66c2;
-  --db-accent: #f97316;
   --db-accent-700: #c85d12;
   --db-accent-800: #a84e0f;
   --db-dark: #1c1f24;
@@ -13,11 +12,11 @@
   --db-line: #e4e7eb;
   --db-paper: #ffffff;
   --db-muted: #70767f;
-
   --db-tint-blue: #f3f8fd;
   --db-tint-warm: #fbf4ef;
 
-  /* --- dark-ground family --- */
+  /* --- dark-ground family: the brand's permanently-dark surfaces (sidebar, login) — never theme-switched --- */
+  --db-accent: #f97316;
   --db-ground: #0b0e11;
   --db-ground-view: #101317;
   --db-card-dark: #171b20;
@@ -50,6 +49,29 @@
   --foreground: var(--db-dark);
 }
 
+/*
+ * Dark mode re-points the content-surface tokens at the design system's own
+ * dark-ground palette, so every component built from --db-paper/--db-light/
+ * --db-dark/etc. (cards, tables, forms) switches without per-component
+ * changes. The sidebar/login already use the dark-ground tokens directly and
+ * are unaffected — only the light-ground content area changes.
+ */
+:root[data-theme="dark"] {
+  --db-primary: var(--db-link-dark);
+  --db-accent-700: #f97316;
+  --db-accent-800: #fb923c;
+  --db-dark: var(--db-ink-head);
+  --db-ink-soft: var(--db-ink-2);
+  --db-light: #0f1317;
+  --db-line: var(--db-hair-3);
+  --db-paper: var(--db-card-dark);
+  --db-muted: var(--db-muted-2);
+  --db-tint-blue: #16232e;
+  --db-tint-warm: #2a2118;
+  --db-pass: #3fae6c;
+  --db-fail: #e2544d;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -63,5 +85,23 @@ h1, h2, h3, h4, .font-display {
 @media print {
   nav, .no-print {
     display: none !important;
+  }
+
+  /* Printing/exporting a PDF should always use the light brand palette
+     regardless of the viewer's toggle choice. */
+  :root[data-theme="dark"] {
+    --db-primary: #0a66c2;
+    --db-accent-700: #c85d12;
+    --db-accent-800: #a84e0f;
+    --db-dark: #1c1f24;
+    --db-ink-soft: #3a3f46;
+    --db-light: #f8fafc;
+    --db-line: #e4e7eb;
+    --db-paper: #ffffff;
+    --db-muted: #70767f;
+    --db-tint-blue: #f3f8fd;
+    --db-tint-warm: #fbf4ef;
+    --db-pass: #1b6b3a;
+    --db-fail: #b4231f;
   }
 }

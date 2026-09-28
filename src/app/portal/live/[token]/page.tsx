@@ -11,6 +11,7 @@ import {
 } from "@/components/dashboard-blocks";
 import { DataTable } from "@/components/ui";
 import { nameById } from "@/lib/lookup";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const RANGES: { key: Range; label: string }[] = [
   { key: "all", label: "All-Time" },
@@ -41,17 +42,22 @@ export default async function LivePortalPage({
   return (
     <div className="min-h-screen bg-[var(--db-light)]">
       <div className="max-w-[1200px] mx-auto px-8 py-10">
-        <header className="mb-8 border-b border-[var(--db-line)] pb-6">
-          <div className="text-[11px] uppercase tracking-widest text-[var(--db-primary)] font-semibold mb-2">
-            Outbound Engagement Reporting
+        <header className="mb-8 border-b border-[var(--db-line)] pb-6 flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-[var(--db-primary)] font-semibold mb-2">
+              Outbound Engagement Reporting
+            </div>
+            <h1 className="font-display text-[24px] font-semibold text-[var(--db-dark)]">
+              {engagement.name}
+            </h1>
+            <div className="text-[13px] text-[var(--db-muted)] mt-1">
+              {engagement.startDate} &ndash; {engagement.endDate ?? "Ongoing"} &middot; Updated as
+              calls are logged
+            </div>
           </div>
-          <h1 className="font-display text-[24px] font-semibold text-[var(--db-dark)]">
-            {engagement.name}
-          </h1>
-          <div className="text-[13px] text-[var(--db-muted)] mt-1">
-            {engagement.startDate} &ndash; {engagement.endDate ?? "Ongoing"} &middot; Updated as calls
-            are logged
-          </div>
+          <span className="no-print">
+            <ThemeToggle />
+          </span>
         </header>
 
         <nav className="flex gap-1 mb-6">

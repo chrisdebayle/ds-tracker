@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
   { href: "/engagements", label: "Engagements" },
@@ -29,17 +30,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </Link>
           ))}
         </nav>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/login" });
-          }}
-          className="mt-auto"
-        >
-          <button className="text-[12px] text-[var(--db-muted-2)] hover:text-[var(--db-ink-head)]">
-            Sign out
-          </button>
-        </form>
+        <div className="mt-auto flex flex-col gap-4">
+          <ThemeToggle variant="onDark" />
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}
+          >
+            <button className="text-[12px] text-[var(--db-muted-2)] hover:text-[var(--db-ink-head)]">
+              Sign out
+            </button>
+          </form>
+        </div>
       </aside>
       <main className="flex-1 bg-[var(--db-light)] p-8">{children}</main>
     </div>

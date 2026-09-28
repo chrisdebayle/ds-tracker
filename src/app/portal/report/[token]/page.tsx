@@ -27,6 +27,7 @@ export default async function ReportPortalPage({ params }: { params: Promise<{ t
         findings={engagement.findings}
         nextSteps={engagement.nextSteps}
         segmentBreakdown={segmentBreakdown}
+        showThemeToggle
       />
     </div>
   );
