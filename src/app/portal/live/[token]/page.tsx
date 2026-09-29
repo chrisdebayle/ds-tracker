@@ -6,6 +6,7 @@ import {
   BelowMinimumBanner,
   CompositeMetricCards,
   DispositionBreakdownTable,
+  ExcludedActivityNote,
   KpiStrip,
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
@@ -102,7 +103,7 @@ async function DashboardTab({
   base: string;
   range: Range;
 }) {
-  const [{ counts, dials, totalCompleted: completed }, allTime, segmentBreakdown] = await Promise.all([
+  const [{ counts, dials, totalCompleted: completed, excluded }, allTime, segmentBreakdown] = await Promise.all([
     getEngagementCounts(engagementId, range),
     range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all"),
     getSegmentBreakdown(engagementId),
@@ -131,6 +132,7 @@ async function DashboardTab({
       </div>
 
       <KpiStrip counts={counts} dials={dials} />
+      <ExcludedActivityNote excluded={excluded} />
       <BelowMinimumBanner completed={allTimeCompleted} />
 
       <div className="mb-8">

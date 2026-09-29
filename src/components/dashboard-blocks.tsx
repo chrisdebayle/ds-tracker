@@ -9,7 +9,7 @@ import {
   rawConnectRate,
   totalCompleted,
 } from "@/lib/disposition";
-import { Card, DataTable, KpiCard, StatusPill } from "@/components/ui";
+import { Card, DataTable, KpiCard, Pill, StatusPill } from "@/components/ui";
 
 export function BelowMinimumBanner({ completed }: { completed: number }) {
   if (completed >= MIN_SAMPLE_SIZE) return null;
@@ -23,6 +23,20 @@ export function BelowMinimumBanner({ completed }: { completed: number }) {
         recommends at least {MIN_SAMPLE_SIZE} before diagnostics are statistically meaningful.
       </div>
     </Card>
+  );
+}
+
+export function ExcludedActivityNote({
+  excluded,
+}: {
+  excluded: { dials: number; totalCompleted: number };
+}) {
+  if (excluded.dials === 0 && excluded.totalCompleted === 0) return null;
+  return (
+    <div className="text-[12px] text-[var(--db-muted)] -mt-4 mb-6">
+      + {excluded.dials} dials / {excluded.totalCompleted} conversations across reallocated lists
+      (not included above)
+    </div>
   );
 }
 
@@ -98,8 +112,17 @@ export function SegmentBreakdownCards({
   showLogic,
 }: {
   breakdown: {
-    segment: { id: string; name: string; listTotal: number; logic: string | null; read: string | null };
+    segment: {
+      id: string;
+      name: string;
+      listTotal: number;
+      logic: string | null;
+      read: string | null;
+      isReallocation: boolean;
+    };
+    sourceSegmentName?: string | null;
     counts: DispositionCounts;
+    dials: number;
     logged: number;
     pctOfList: number;
   }[];
@@ -107,7 +130,7 @@ export function SegmentBreakdownCards({
 }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {breakdown.map(({ segment, counts, logged, pctOfList }) => {
+      {breakdown.map(({ segment, sourceSegmentName, counts, dials, logged, pctOfList }) => {
         const rows = dispositionBreakdown(counts)
           .slice()
           .sort((a, b) => b.count - a.count)
@@ -115,9 +138,15 @@ export function SegmentBreakdownCards({
         const total = totalCompleted(counts);
         return (
           <Card key={segment.id}>
-            <div className="font-semibold text-[var(--db-dark)]">{segment.name}</div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="font-semibold text-[var(--db-dark)]">{segment.name}</div>
+              {segment.isReallocation && (
+                <Pill tone="warm">Recycled{sourceSegmentName ? ` from: ${sourceSegmentName}` : ""}</Pill>
+              )}
+            </div>
             <div className="text-[12px] text-[var(--db-muted)] mb-2">
-              {logged} of {segment.listTotal} logged &middot; {pctOfList}%
+              {logged} of {segment.listTotal} logged &middot; {pctOfList}% &middot; {dials} dials &middot;{" "}
+              {rawConnectRate(logged, dials).toFixed(1)}% connect
             </div>
             {showLogic && segment.logic && (
               <div className="text-[12px] italic text-[var(--db-ink-soft)] mb-3">{segment.logic}</div>

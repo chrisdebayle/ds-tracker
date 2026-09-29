@@ -108,12 +108,23 @@ export async function addSegment(engagementId: string, formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
+
+  const isReallocation = formData.get("isReallocation") === "on";
+  const sourceSegmentIdRaw = String(formData.get("sourceSegmentId") ?? "");
+  let sourceSegmentId: string | null = null;
+  if (isReallocation && sourceSegmentIdRaw) {
+    await assertBelongsToEngagement(segments, sourceSegmentIdRaw, engagementId, "Source list");
+    sourceSegmentId = sourceSegmentIdRaw;
+  }
+
   await db.insert(segments).values({
     engagementId,
     name,
     logic: String(formData.get("logic") ?? "").trim(),
     listTotal: Math.max(0, parseInt(String(formData.get("listTotal") ?? "0"), 10) || 0),
     baseCounts: { ...EMPTY_COUNTS },
+    isReallocation,
+    sourceSegmentId,
   });
   revalidatePath(`/engagements/${engagementId}/setup`);
   revalidatePath(`/engagements/${engagementId}/log`);

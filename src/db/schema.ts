@@ -9,6 +9,7 @@ import {
   pgEnum,
   date,
   uniqueIndex,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { DispositionCounts } from "@/lib/disposition";
 
@@ -68,6 +69,16 @@ export const segments = pgTable("segments", {
   baseDials: integer("base_dials").notNull().default(0),
   baseCounts: jsonb("base_counts").$type<DispositionCounts>().notNull(),
   read: text("read").default(""),
+  /** True when this list reuses contacts already pulled for another list
+   * under this engagement (a different message/signal tested against a
+   * known subset), rather than a net-new pool. Reallocated lists keep full
+   * dial/disposition tracking on their own segment card but are excluded
+   * from the engagement's headline Dashboard/Report totals, which stay a
+   * clean read on the client's original target-list performance. */
+  isReallocation: boolean("is_reallocation").notNull().default(false),
+  sourceSegmentId: uuid("source_segment_id").references((): AnyPgColumn => segments.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getEngagement, getReps, getSegments } from "@/db/queries";
 import { addRep, addSegment, updateEngagement, updateSegmentRead } from "../../../actions";
 import { Field, inputClass, Button, Card, Pill } from "@/components/ui";
+import { AddSegmentForm } from "@/components/add-segment-form";
+import { nameById } from "@/lib/lookup";
 
 export default async function SetupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,6 +11,7 @@ export default async function SetupPage({ params }: { params: Promise<{ id: stri
   if (!engagement) notFound();
 
   const [repList, segmentList] = await Promise.all([getReps(id), getSegments(id)]);
+  const segName = nameById(segmentList);
   const updateAction = updateEngagement.bind(null, id);
   const addRepAction = addRep.bind(null, id);
   const addSegmentAction = addSegment.bind(null, id);
@@ -88,7 +91,14 @@ export default async function SetupPage({ params }: { params: Promise<{ id: stri
         <div className="flex flex-col gap-3 mb-5">
           {segmentList.map((seg) => (
             <Card key={seg.id}>
-              <div className="font-semibold text-[var(--db-dark)]">{seg.name}</div>
+              <div className="flex items-center gap-2">
+                <div className="font-semibold text-[var(--db-dark)]">{seg.name}</div>
+                {seg.isReallocation && (
+                  <Pill tone="warm">
+                    Recycled from: {seg.sourceSegmentId ? segName(seg.sourceSegmentId) : "—"}
+                  </Pill>
+                )}
+              </div>
               <div className="text-[12px] text-[var(--db-muted)] mb-1">List size: {seg.listTotal}</div>
               {seg.logic && (
                 <div className="text-[13px] italic text-[var(--db-ink-soft)] mb-3">{seg.logic}</div>
@@ -115,20 +125,7 @@ export default async function SetupPage({ params }: { params: Promise<{ id: stri
             <span className="text-sm text-[var(--db-muted)]">No target lists added yet.</span>
           )}
         </div>
-        <form action={addSegmentAction} className="grid grid-cols-[1.2fr_2fr_0.8fr_auto] gap-3 items-end">
-          <Field label="Name">
-            <input name="name" required className={inputClass} />
-          </Field>
-          <Field label="Logic">
-            <input name="logic" className={inputClass} />
-          </Field>
-          <Field label="List Size">
-            <input name="listTotal" type="number" min={0} defaultValue={0} className={inputClass} />
-          </Field>
-          <Button type="submit" variant="outline">
-            + Add List
-          </Button>
-        </form>
+        <AddSegmentForm action={addSegmentAction} existingSegments={segmentList} />
       </section>
     </div>
   );

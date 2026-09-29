@@ -62,10 +62,19 @@ function rangeStartDate(range: Range): string | null {
   return new Date(utcMidnight - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-/** Total counts for an engagement across all segments: base + logged entries, filtered by range. */
+/**
+ * Total counts for an engagement across its non-reallocated segments: base +
+ * logged entries, filtered by range. Reallocated lists (contacts recycled
+ * from an existing list to test a different message) are deliberately left
+ * out of these headline totals — see `segments.isReallocation` — so the
+ * Dashboard/Report stay a clean read on the client's original target-list
+ * performance. Their activity is still returned separately as `excluded`,
+ * so it isn't hidden, just not blended into the quality benchmarks.
+ */
 export async function getEngagementCounts(engagementId: string, range: Range = "all") {
   const segs = await getSegments(engagementId);
   const start = rangeStartDate(range);
+  const reallocatedIds = new Set(segs.filter((s) => s.isReallocation).map((s) => s.id));
 
   const logRows = await db
     .select()
@@ -79,38 +88,61 @@ export async function getEngagementCounts(engagementId: string, range: Range = "
   let counts: DispositionCounts = { ...EMPTY_COUNTS };
   let dials = 0;
   let talkTime = 0;
+  let excludedCounts: DispositionCounts = { ...EMPTY_COUNTS };
+  let excludedDials = 0;
 
   // base counts/dials only apply to the all-time view (they represent pre-tool history)
   if (range === "all") {
     for (const seg of segs) {
-      counts = sumCounts(counts, seg.baseCounts);
-      dials += seg.baseDials;
+      if (seg.isReallocation) {
+        excludedCounts = sumCounts(excludedCounts, seg.baseCounts);
+        excludedDials += seg.baseDials;
+      } else {
+        counts = sumCounts(counts, seg.baseCounts);
+        dials += seg.baseDials;
+      }
     }
   }
   for (const row of logRows) {
-    counts = sumCounts(counts, row.counts);
-    dials += row.dials;
-    talkTime += row.talkTimeMinutes;
+    if (reallocatedIds.has(row.segmentId)) {
+      excludedCounts = sumCounts(excludedCounts, row.counts);
+      excludedDials += row.dials;
+    } else {
+      counts = sumCounts(counts, row.counts);
+      dials += row.dials;
+      talkTime += row.talkTimeMinutes;
+    }
   }
 
-  return { counts, dials, talkTime, totalCompleted: totalCompleted(counts) };
+  return {
+    counts,
+    dials,
+    talkTime,
+    totalCompleted: totalCompleted(counts),
+    excluded: { dials: excludedDials, totalCompleted: totalCompleted(excludedCounts) },
+  };
 }
 
 /** Per-segment counts (base + all-time logged entries — segment cards are always all-time). */
 export async function getSegmentBreakdown(engagementId: string) {
   const segs = await getSegments(engagementId);
   const logRows = await getDailyLog(engagementId);
+  const nameById = new Map(segs.map((s) => [s.id, s.name]));
 
   return segs.map((seg) => {
     const segLogRows = logRows.filter((r) => r.segmentId === seg.id);
     let counts: DispositionCounts = { ...seg.baseCounts };
+    let dials = seg.baseDials;
     for (const row of segLogRows) {
       counts = sumCounts(counts, row.counts);
+      dials += row.dials;
     }
     const logged = totalCompleted(counts);
     return {
       segment: seg,
+      sourceSegmentName: seg.sourceSegmentId ? (nameById.get(seg.sourceSegmentId) ?? null) : null,
       counts,
+      dials,
       logged,
       total: logged,
       pctOfList: seg.listTotal ? Math.round((logged / seg.listTotal) * 100) : 0,

@@ -11,8 +11,17 @@ import { SegmentBreakdownCards } from "@/components/dashboard-blocks";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export interface ReportSegment {
-  segment: { id: string; name: string; listTotal: number; logic: string | null; read: string | null };
+  segment: {
+    id: string;
+    name: string;
+    listTotal: number;
+    logic: string | null;
+    read: string | null;
+    isReallocation: boolean;
+  };
+  sourceSegmentName?: string | null;
   counts: DispositionCounts;
+  dials: number;
   logged: number;
   pctOfList: number;
 }
