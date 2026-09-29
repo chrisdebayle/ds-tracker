@@ -4,6 +4,34 @@ import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
+function MoonIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M12 2v2.2M12 19.8V22M22 12h-2.2M4.2 12H2M18.7 5.3l-1.55 1.55M6.85 17.15 5.3 18.7M18.7 18.7l-1.55-1.55M6.85 6.85 5.3 5.3"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function applyTheme(theme: Theme) {
   document.documentElement.setAttribute("data-theme", theme);
   window.localStorage.setItem("db-theme", theme);
@@ -51,7 +79,7 @@ export function ThemeToggle({
       aria-label={`Switch to ${next} mode`}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold ${style} ${className}`}
     >
-      <span aria-hidden>{theme === "dark" ? "☀️" : "🌙"}</span>
+      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
       {theme === "dark" ? "Light" : "Dark"}
     </button>
   );
