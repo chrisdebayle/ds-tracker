@@ -75,9 +75,9 @@ export function AddSegmentForm({
             </Field>
           </div>
           <p className="text-[11px] text-[var(--db-ink-soft)] leading-relaxed pb-2">
-            Tracked on its own card, but excluded from the engagement&rsquo;s headline
-            Dashboard/Report totals so a different message tested on a known subset doesn&rsquo;t
-            dilute the read on the original list.
+            Tracked on its own card and counted in the engagement&rsquo;s headline totals by
+            default. Use the &ldquo;Exclude recycled lists&rdquo; toggle on the Dashboard for a
+            clean read on the original lists.
           </p>
         </div>
       )}

@@ -6,7 +6,7 @@ import {
   BelowMinimumBanner,
   CompositeMetricCards,
   DispositionBreakdownTable,
-  ExcludedActivityNote,
+  RecycledActivityNote,
   KpiStrip,
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
@@ -25,10 +25,11 @@ export default async function LivePortalPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ tab?: string; range?: string }>;
+  searchParams: Promise<{ tab?: string; range?: string; recycled?: string }>;
 }) {
   const { token } = await params;
-  const { tab: tabParam, range: rangeParam } = await searchParams;
+  const { tab: tabParam, range: rangeParam, recycled: recycledParam } = await searchParams;
+  const excludeRecycled = recycledParam === "exclude";
   const tab = tabParam === "recordings" ? "recordings" : "dashboard";
   const range: Range = rangeParam === "30d" || rangeParam === "7d" ? rangeParam : "all";
 
@@ -85,7 +86,7 @@ export default async function LivePortalPage({
         </nav>
 
         {tab === "dashboard" ? (
-          <DashboardTab engagementId={engagement.id} base={base} range={range} />
+          <DashboardTab engagementId={engagement.id} base={base} range={range} excludeRecycled={excludeRecycled} />
         ) : (
           <RecordingsTab engagementId={engagement.id} />
         )}
@@ -98,14 +99,16 @@ async function DashboardTab({
   engagementId,
   base,
   range,
+  excludeRecycled,
 }: {
   engagementId: string;
   base: string;
   range: Range;
+  excludeRecycled: boolean;
 }) {
-  const [{ counts, dials, totalCompleted: completed, excluded }, allTime, segmentBreakdown] = await Promise.all([
-    getEngagementCounts(engagementId, range),
-    range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all"),
+  const [{ counts, dials, totalCompleted: completed, recycled }, allTime, segmentBreakdown] = await Promise.all([
+    getEngagementCounts(engagementId, range, { excludeRecycled }),
+    range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all", { excludeRecycled }),
     getSegmentBreakdown(engagementId),
   ]);
 
@@ -119,7 +122,7 @@ async function DashboardTab({
         {RANGES.map((r) => (
           <Link
             key={r.key}
-            href={`${base}?tab=dashboard&range=${r.key}`}
+            href={`${base}?tab=dashboard&range=${r.key}${excludeRecycled ? "&recycled=exclude" : ""}`}
             className={`px-3 py-1.5 rounded-full text-[12px] font-semibold ${
               range === r.key
                 ? "bg-[var(--db-primary)] text-white"
@@ -132,7 +135,11 @@ async function DashboardTab({
       </div>
 
       <KpiStrip counts={counts} dials={dials} />
-      <ExcludedActivityNote excluded={excluded} />
+      <RecycledActivityNote
+        recycled={recycled}
+        excludeRecycled={excludeRecycled}
+        toggleHref={`${base}?tab=dashboard&range=${range}${excludeRecycled ? "" : "&recycled=exclude"}`}
+      />
       <BelowMinimumBanner completed={allTimeCompleted} />
 
       <div className="mb-8">

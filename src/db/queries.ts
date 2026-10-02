@@ -63,18 +63,22 @@ function rangeStartDate(range: Range): string | null {
 }
 
 /**
- * Total counts for an engagement across its non-reallocated segments: base +
- * logged entries, filtered by range. Reallocated lists (contacts recycled
- * from an existing list to test a different message) are deliberately left
- * out of these headline totals — see `segments.isReallocation` — so the
- * Dashboard/Report stay a clean read on the client's original target-list
- * performance. Their activity is still returned separately as `excluded`,
- * so it isn't hidden, just not blended into the quality benchmarks.
+ * Total counts for an engagement: base + logged entries, filtered by range.
+ * Recycled lists (`segments.isReallocation`) are INCLUDED by default so every
+ * logged call shows up in the headline. Pass `excludeRecycled` to leave them
+ * out for a clean read on the original target lists. Either way the recycled
+ * lists' own activity is returned as `recycled`, so the UI can say what is
+ * (or isn't) in the totals.
  */
-export async function getEngagementCounts(engagementId: string, range: Range = "all") {
+export async function getEngagementCounts(
+  engagementId: string,
+  range: Range = "all",
+  opts: { excludeRecycled?: boolean } = {}
+) {
+  const excludeRecycled = opts.excludeRecycled ?? false;
   const segs = await getSegments(engagementId);
   const start = rangeStartDate(range);
-  const reallocatedIds = new Set(segs.filter((s) => s.isReallocation).map((s) => s.id));
+  const recycledIds = new Set(segs.filter((s) => s.isReallocation).map((s) => s.id));
 
   const logRows = await db
     .select()
@@ -88,26 +92,29 @@ export async function getEngagementCounts(engagementId: string, range: Range = "
   let counts: DispositionCounts = { ...EMPTY_COUNTS };
   let dials = 0;
   let talkTime = 0;
-  let excludedCounts: DispositionCounts = { ...EMPTY_COUNTS };
-  let excludedDials = 0;
+  let recycledCounts: DispositionCounts = { ...EMPTY_COUNTS };
+  let recycledDials = 0;
 
   // base counts/dials only apply to the all-time view (they represent pre-tool history)
   if (range === "all") {
     for (const seg of segs) {
       if (seg.isReallocation) {
-        excludedCounts = sumCounts(excludedCounts, seg.baseCounts);
-        excludedDials += seg.baseDials;
-      } else {
+        recycledCounts = sumCounts(recycledCounts, seg.baseCounts);
+        recycledDials += seg.baseDials;
+      }
+      if (!(excludeRecycled && seg.isReallocation)) {
         counts = sumCounts(counts, seg.baseCounts);
         dials += seg.baseDials;
       }
     }
   }
   for (const row of logRows) {
-    if (reallocatedIds.has(row.segmentId)) {
-      excludedCounts = sumCounts(excludedCounts, row.counts);
-      excludedDials += row.dials;
-    } else {
+    const isRecycled = recycledIds.has(row.segmentId);
+    if (isRecycled) {
+      recycledCounts = sumCounts(recycledCounts, row.counts);
+      recycledDials += row.dials;
+    }
+    if (!(excludeRecycled && isRecycled)) {
       counts = sumCounts(counts, row.counts);
       dials += row.dials;
       talkTime += row.talkTimeMinutes;
@@ -119,7 +126,8 @@ export async function getEngagementCounts(engagementId: string, range: Range = "
     dials,
     talkTime,
     totalCompleted: totalCompleted(counts),
-    excluded: { dials: excludedDials, totalCompleted: totalCompleted(excludedCounts) },
+    recycled: { dials: recycledDials, totalCompleted: totalCompleted(recycledCounts) },
+    excludeRecycled,
   };
 }
 

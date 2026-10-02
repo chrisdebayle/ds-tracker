@@ -9,7 +9,7 @@ import {
   BelowMinimumBanner,
   CompositeMetricCards,
   DispositionBreakdownTable,
-  ExcludedActivityNote,
+  RecycledActivityNote,
   KpiStrip,
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
@@ -25,19 +25,20 @@ export default async function DashboardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ range?: string }>;
+  searchParams: Promise<{ range?: string; recycled?: string }>;
 }) {
   const { id } = await params;
-  const { range: rangeParam } = await searchParams;
+  const { range: rangeParam, recycled: recycledParam } = await searchParams;
+  const excludeRecycled = recycledParam === "exclude";
   const range: Range = rangeParam === "30d" || rangeParam === "7d" ? rangeParam : "all";
 
   const engagement = await getEngagement(id);
   if (!engagement) notFound();
 
-  const [{ counts, dials, totalCompleted: completed, excluded }, allTime, segmentBreakdown, liveLink, origin] =
+  const [{ counts, dials, totalCompleted: completed, recycled }, allTime, segmentBreakdown, liveLink, origin] =
     await Promise.all([
-      getEngagementCounts(id, range),
-      range === "all" ? Promise.resolve(null) : getEngagementCounts(id, "all"),
+      getEngagementCounts(id, range, { excludeRecycled }),
+      range === "all" ? Promise.resolve(null) : getEngagementCounts(id, "all", { excludeRecycled }),
       getSegmentBreakdown(id),
       getOrCreateShareLink(id, "live"),
       getSiteOrigin(),
@@ -71,7 +72,7 @@ export default async function DashboardPage({
         {RANGES.map((r) => (
           <Link
             key={r.key}
-            href={`?range=${r.key}`}
+            href={`?range=${r.key}${excludeRecycled ? "&recycled=exclude" : ""}`}
             className={`px-3 py-1.5 rounded-full text-[12px] font-semibold ${
               range === r.key
                 ? "bg-[var(--db-primary)] text-white"
@@ -84,7 +85,11 @@ export default async function DashboardPage({
       </div>
 
       <KpiStrip counts={counts} dials={dials} />
-      <ExcludedActivityNote excluded={excluded} />
+      <RecycledActivityNote
+        recycled={recycled}
+        excludeRecycled={excludeRecycled}
+        toggleHref={`?range=${range}${excludeRecycled ? "" : "&recycled=exclude"}`}
+      />
       <BelowMinimumBanner completed={allTimeCompleted} />
 
       <div className="mb-8">

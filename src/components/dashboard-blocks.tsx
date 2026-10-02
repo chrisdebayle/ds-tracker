@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   DispositionCounts,
   MIN_SAMPLE_SIZE,
@@ -26,16 +27,28 @@ export function BelowMinimumBanner({ completed }: { completed: number }) {
   );
 }
 
-export function ExcludedActivityNote({
-  excluded,
+export function RecycledActivityNote({
+  recycled,
+  excludeRecycled,
+  toggleHref,
 }: {
-  excluded: { dials: number; totalCompleted: number };
+  recycled: { dials: number; totalCompleted: number };
+  excludeRecycled: boolean;
+  toggleHref: string;
 }) {
-  if (excluded.dials === 0 && excluded.totalCompleted === 0) return null;
+  if (recycled.dials === 0 && recycled.totalCompleted === 0) return null;
   return (
-    <div className="text-[12px] text-[var(--db-muted)] -mt-4 mb-6">
-      + {excluded.dials} dials / {excluded.totalCompleted} conversations across reallocated lists
-      (not included above)
+    <div className="flex items-center gap-3 flex-wrap text-[12px] text-[var(--db-muted)] -mt-4 mb-6">
+      <span>
+        {excludeRecycled ? "Not included above: " : "Includes "}
+        {recycled.dials} dials / {recycled.totalCompleted} conversations from recycled lists
+      </span>
+      <Link
+        href={toggleHref}
+        className="rounded-full border border-[var(--db-line)] bg-[var(--db-paper)] px-3 py-1 font-semibold text-[var(--db-ink-soft)] hover:border-[var(--db-primary)]"
+      >
+        {excludeRecycled ? "Include recycled lists" : "Exclude recycled lists"}
+      </Link>
     </div>
   );
 }
