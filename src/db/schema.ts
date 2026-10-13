@@ -97,6 +97,11 @@ export const dailyLogEntries = pgTable("daily_log_entries", {
   dials: integer("dials").notNull().default(0),
   talkTimeMinutes: integer("talk_time_minutes").notNull().default(0),
   counts: jsonb("counts").$type<DispositionCounts>().notNull(),
+  // Attempt Layer (non-connected dials). NULL = not recorded (entries logged
+  // before the Attempt Layer existed), which is different from a real 0.
+  noAnswer: integer("no_answer"),
+  aiScreener: integer("ai_screener"),
+  wrongNumber: integer("wrong_number"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

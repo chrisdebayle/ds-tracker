@@ -24,6 +24,12 @@ function countsFromForm(formData: FormData): DispositionCounts {
   return counts;
 }
 
+/** Attempt Layer field: null when the form didn't send it, otherwise a non-negative int. */
+function attemptFromForm(formData: FormData, key: string): number | null {
+  if (!formData.has(key)) return null;
+  return Math.max(0, parseInt(String(formData.get(key) ?? "0"), 10) || 0);
+}
+
 const SAFE_URL_SCHEME = /^https?:\/\//i;
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -34,7 +40,7 @@ function requireDate(value: FormDataEntryValue | null, field: string): string {
 }
 
 async function assertBelongsToEngagement(
-  table: typeof segments | typeof reps | typeof recordings,
+  table: typeof segments | typeof reps | typeof recordings | typeof dailyLogEntries,
   id: string,
   engagementId: string,
   what: string
@@ -164,11 +170,47 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
     dials: Math.max(0, parseInt(String(formData.get("dials") ?? "0"), 10) || 0),
     talkTimeMinutes: Math.max(0, parseInt(String(formData.get("talkTime") ?? "0"), 10) || 0),
     counts: countsFromForm(formData),
+    noAnswer: attemptFromForm(formData, "noAnswer"),
+    aiScreener: attemptFromForm(formData, "aiScreener"),
+    wrongNumber: attemptFromForm(formData, "wrongNumber"),
   });
 
   revalidatePath(`/engagements/${engagementId}/log`);
   revalidatePath(`/engagements/${engagementId}/dashboard`);
   revalidatePath(`/engagements/${engagementId}/report`);
+}
+
+export async function updateLogEntry(engagementId: string, entryId: string, formData: FormData) {
+  await requireAdmin();
+  await assertBelongsToEngagement(dailyLogEntries, entryId, engagementId, "Log entry");
+
+  const segmentId = String(formData.get("segmentId") ?? "");
+  const repId = String(formData.get("repId") ?? "");
+  if (!segmentId || !repId) throw new Error("Rep and target list are required");
+  const date = requireDate(formData.get("date"), "Date");
+
+  await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
+  await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
+
+  await db
+    .update(dailyLogEntries)
+    .set({
+      segmentId,
+      repId,
+      date,
+      dials: Math.max(0, parseInt(String(formData.get("dials") ?? "0"), 10) || 0),
+      talkTimeMinutes: Math.max(0, parseInt(String(formData.get("talkTime") ?? "0"), 10) || 0),
+      counts: countsFromForm(formData),
+      noAnswer: attemptFromForm(formData, "noAnswer"),
+      aiScreener: attemptFromForm(formData, "aiScreener"),
+      wrongNumber: attemptFromForm(formData, "wrongNumber"),
+    })
+    .where(eq(dailyLogEntries.id, entryId));
+
+  revalidatePath(`/engagements/${engagementId}/log`);
+  revalidatePath(`/engagements/${engagementId}/dashboard`);
+  revalidatePath(`/engagements/${engagementId}/report`);
+  redirect(`/engagements/${engagementId}/log`);
 }
 
 export async function addRecording(engagementId: string, formData: FormData) {

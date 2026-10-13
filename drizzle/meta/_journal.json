@@ -29,6 +29,13 @@
       "when": 1790720330394,
       "tag": "0003_flawless_meggan",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791910205007,
+      "tag": "0004_secret_leper_queen",
+      "breakpoints": true
     }
   ]
 }

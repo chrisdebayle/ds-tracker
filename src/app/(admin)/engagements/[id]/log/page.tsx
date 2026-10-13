@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDailyLog, getEngagement, getReps, getSegments } from "@/db/queries";
 import { addLogEntry } from "../../../actions";
 import { LogForm } from "@/components/log-form";
 import { DataTable } from "@/components/ui";
-import { DISP_META, rawConnectRate, totalCompleted } from "@/lib/disposition";
+import { DISP_META, contactRate, totalCompleted } from "@/lib/disposition";
 import { nameById } from "@/lib/lookup";
 
 export default async function DailyLogPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,8 +20,12 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
 
   const repName = nameById(repList);
   const segName = nameById(segmentList);
+  const segmentTags = Object.fromEntries(
+    segmentList.filter((s) => s.isReallocation).map((s) => [s.id, "recycled"])
+  );
 
   const action = addLogEntry.bind(null, id);
+  const attempt = (n: number | null) => (n === null ? "—" : n);
 
   const columns = [
     "Date",
@@ -28,9 +33,13 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
     "List",
     "Dials",
     "Completed",
-    "Connect Rate",
+    "Contact Rate",
+    "No Answer",
+    "AI Screener",
+    "Wrong #",
     ...DISP_META.map((d) => d.label),
     "Talk (min)",
+    "",
   ];
 
   const rows = entries.map((entry) => {
@@ -41,9 +50,19 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
       segName(entry.segmentId),
       entry.dials,
       completed,
-      `${rawConnectRate(completed, entry.dials).toFixed(1)}%`,
+      `${contactRate(completed, entry.dials).toFixed(1)}%`,
+      attempt(entry.noAnswer),
+      attempt(entry.aiScreener),
+      attempt(entry.wrongNumber),
       ...DISP_META.map((d) => entry.counts[d.key] ?? 0),
       entry.talkTimeMinutes,
+      <Link
+        key={`${entry.id}-edit`}
+        href={`/engagements/${id}/log/${entry.id}/edit`}
+        className="text-[var(--db-ink-soft)] font-semibold hover:text-[var(--db-primary)]"
+      >
+        Edit
+      </Link>,
     ];
   });
 
@@ -53,10 +72,15 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
         action={action}
         reps={repList.map((r) => ({ id: r.id, name: r.name }))}
         segments={segmentList.map((s) => ({ id: s.id, name: s.name }))}
+        segmentTags={segmentTags}
       />
 
       <div>
-        <h2 className="font-display text-[16px] font-semibold text-[var(--db-dark)] mb-3">History</h2>
+        <h2 className="font-display text-[16px] font-semibold text-[var(--db-dark)] mb-1">History</h2>
+        <p className="text-[12px] text-[var(--db-muted)] mb-3">
+          &ldquo;&mdash;&rdquo; means the attempt breakdown was never recorded for that day. Use Edit to
+          add it.
+        </p>
         {rows.length === 0 ? (
           <p className="text-sm text-[var(--db-muted)]">No entries logged yet.</p>
         ) : (

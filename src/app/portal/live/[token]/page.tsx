@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { resolveShareToken } from "@/lib/share-tokens";
 import { getEngagement, getEngagementCounts, getRecordings, getReps, getSegmentBreakdown, type Range } from "@/db/queries";
 import {
+  AttemptMix,
   BelowMinimumBanner,
   CompositeMetricCards,
   DispositionBreakdownTable,
@@ -106,7 +107,7 @@ async function DashboardTab({
   range: Range;
   excludeRecycled: boolean;
 }) {
-  const [{ counts, dials, totalCompleted: completed, recycled }, allTime, segmentBreakdown] = await Promise.all([
+  const [{ counts, dials, totalCompleted: completed, recycled, attempts }, allTime, segmentBreakdown] = await Promise.all([
     getEngagementCounts(engagementId, range, { excludeRecycled }),
     range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all", { excludeRecycled }),
     getSegmentBreakdown(engagementId),
@@ -140,6 +141,7 @@ async function DashboardTab({
         excludeRecycled={excludeRecycled}
         toggleHref={`${base}?tab=dashboard&range=${range}${excludeRecycled ? "" : "&recycled=exclude"}`}
       />
+      <AttemptMix attempts={attempts} />
       <BelowMinimumBanner completed={allTimeCompleted} />
 
       <div className="mb-8">

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  ATTEMPT_CAP,
+  type AttemptTotals,
   DispositionCounts,
   MIN_SAMPLE_SIZE,
   dispositionBreakdown,
@@ -7,10 +9,12 @@ import {
   meetingActivatedStatus,
   notMeReferredPct,
   notMeReferredStatus,
-  rawConnectRate,
+  contactRate,
   totalCompleted,
 } from "@/lib/disposition";
 import { Card, DataTable, KpiCard, Pill, StatusPill } from "@/components/ui";
+import type { Diagnosis } from "@/lib/diagnosis";
+import { CONFIRM_SAMPLE_SIZE } from "@/lib/diagnosis";
 
 export function BelowMinimumBanner({ completed }: { completed: number }) {
   if (completed >= MIN_SAMPLE_SIZE) return null;
@@ -53,6 +57,57 @@ export function RecycledActivityNote({
   );
 }
 
+export function AttemptMix({ attempts }: { attempts: AttemptTotals }) {
+  if (attempts.dials === 0) return null;
+  const items = [
+    { label: "Connected", value: attempts.connected },
+    { label: "No Answer", value: attempts.noAnswer },
+    { label: "AI Screener", value: attempts.aiScreener },
+    { label: "Wrong Number", value: attempts.wrongNumber },
+    { label: "Not recorded", value: attempts.unclassified },
+  ];
+  return (
+    <Card className="mb-6">
+      <div className="flex items-baseline justify-between mb-3">
+        <h2 className="font-display text-[14px] font-semibold text-[var(--db-dark)]">
+          Where the dials went
+        </h2>
+        <span className="text-[11px] text-[var(--db-muted)]">
+          {attempts.dials} dials &middot; reachability, kept separate from disposition math
+        </span>
+      </div>
+      <div className="flex h-2.5 rounded-full overflow-hidden bg-[var(--db-line)] mb-3">
+        {items.map((it, i) => (
+          <div
+            key={it.label}
+            title={`${it.label}: ${it.value}`}
+            style={{
+              width: `${(it.value / attempts.dials) * 100}%`,
+              opacity: [1, 0.6, 0.4, 0.8, 0.15][i],
+              background: i === 3 ? "var(--db-fail)" : "var(--db-primary)",
+            }}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-5 gap-3">
+        {items.map((it) => (
+          <div key={it.label}>
+            <div className="text-[10.5px] uppercase tracking-wide text-[var(--db-muted)] font-semibold">
+              {it.label}
+            </div>
+            <div className="font-display text-[18px] font-semibold text-[var(--db-dark)]">
+              {it.value}
+              <span className="text-[11px] font-normal text-[var(--db-muted)] ml-1.5">
+                {((it.value / attempts.dials) * 100).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function KpiStrip({ counts, dials }: { counts: DispositionCounts; dials: number }) {
   const completed = totalCompleted(counts);
   const ma = meetingActivatedPct(counts);
@@ -62,7 +117,11 @@ export function KpiStrip({ counts, dials }: { counts: DispositionCounts; dials: 
       <KpiCard label="Total Dials/Attempts" value={String(dials)} />
       <KpiCard label="Total Completed Conversations" value={String(completed)} />
       <KpiCard label="Meetings Booked" value={String(counts.meeting)} />
-      <KpiCard label="Raw Connect Rate" value={`${rawConnectRate(completed, dials).toFixed(1)}%`} />
+      <KpiCard
+        label="Contact Rate"
+        value={`${contactRate(completed, dials).toFixed(1)}%`}
+        sub={<div className="text-[11px] text-[var(--db-muted)]">Connected &divide; dials &middot; no benchmark</div>}
+      />
       <KpiCard
         label="Meeting + Activated %"
         value={`${ma.toFixed(1)}%`}
@@ -120,6 +179,101 @@ export function CompositeMetricCards({ counts }: { counts: DispositionCounts }) 
   );
 }
 
+const TIER_LABEL = {
+  insufficient: "Not enough data yet",
+  directional: "Directional",
+  confirmed: "Confirmed",
+} as const;
+
+export function DiagnosisPanel({
+  items,
+}: {
+  items: {
+    id: string;
+    name: string;
+    recycledFrom?: string | null;
+    diagnosis: Diagnosis;
+    reps: { name: string; counts: DispositionCounts }[];
+  }[];
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      {items.map(({ id, name, recycledFrom, diagnosis: d, reps }) => (
+        <Card key={id}>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <div className="font-semibold text-[var(--db-dark)]">{name}</div>
+            {recycledFrom !== undefined && <Pill tone="warm">Recycled{recycledFrom ? ` from: ${recycledFrom}` : ""}</Pill>}
+            <Pill tone={d.tier === "confirmed" ? "good" : d.tier === "directional" ? "blue" : "neutral"}>
+              {TIER_LABEL[d.tier]}
+            </Pill>
+          </div>
+          <div className="text-[12px] text-[var(--db-muted)] mb-3">
+            {d.completed} completed conversations
+            {d.tier === "insufficient" && ` \u00b7 diagnosis unlocks at ${MIN_SAMPLE_SIZE} (${MIN_SAMPLE_SIZE - d.completed} to go)`}
+            {d.tier === "directional" && ` \u00b7 confirm findings at ${CONFIRM_SAMPLE_SIZE}+ (${CONFIRM_SAMPLE_SIZE - d.completed} to go)`}
+          </div>
+
+          {d.tier === "insufficient" ? (
+            <p className="text-[13px] text-[var(--db-ink-soft)]">
+              The framework says to draw no conclusions before {MIN_SAMPLE_SIZE} completed conversations. Keep
+              logging; this list is its own run, so earlier data from other lists doesn&rsquo;t count toward it.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {d.findings.length === 0 && (
+                <p className="text-[13px] text-[var(--db-ink-soft)]">
+                  {d.healthy
+                    ? "Healthy: executing across all pillars. Activate the bucket-specific follow-up sequences (Activated: hot sequence within 48 hours; Not Now: 30/60/90 day nurture; Referred: immediate outreach; Not Interested: dormant, new hook in 6 months)."
+                    : `No diagnostic rule has fired, but Meeting + Activated is ${d.metrics.meetingActivated.toFixed(1)}% (floor 20%), so this isn't yet healthy.`}
+                </p>
+              )}
+              {d.findings.map((f, i) => (
+                <div key={f.id} className="border-l-[3px] border-[var(--db-primary)] pl-3">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--db-primary)]">
+                      {f.pillar}
+                    </span>
+                    {i === 0 && d.findings.length > 1 && <Pill tone="fail">Fix first</Pill>}
+                  </div>
+                  <div className="text-[13px] font-semibold text-[var(--db-dark)]">{f.title}</div>
+                  <div className="text-[12px] text-[var(--db-muted)] mb-1">IF {f.rule}</div>
+                  <div className="text-[12.5px] text-[var(--db-ink-soft)] mb-1">{f.meaning}</div>
+                  <div className="text-[12.5px] text-[var(--db-ink-soft)]">
+                    <span className="font-semibold">Action:</span> {f.action}
+                  </div>
+                  {f.note && <div className="text-[11.5px] text-[var(--db-muted)] mt-1">{f.note}</div>}
+                  {f.id === "interest" && (
+                    <div className="mt-2">
+                      {reps.length < 2 ? (
+                        <div className="text-[11.5px] text-[var(--db-muted)]">
+                          Only {reps.length} rep has logged on this list, so rep vs. message can&rsquo;t be split yet.
+                        </div>
+                      ) : (
+                        <DataTable
+                          columns={["Rep", "Completed", "Not Interested", "Meeting + Activated"]}
+                          rows={reps.map((r) => {
+                            const c = totalCompleted(r.counts);
+                            return [
+                              r.name,
+                              c,
+                              `${((r.counts.notInterested / (c || 1)) * 100).toFixed(1)}%`,
+                              `${meetingActivatedPct(r.counts).toFixed(1)}%`,
+                            ];
+                          })}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function SegmentBreakdownCards({
   breakdown,
   showLogic,
@@ -136,6 +290,7 @@ export function SegmentBreakdownCards({
     sourceSegmentName?: string | null;
     counts: DispositionCounts;
     dials: number;
+    attempts?: AttemptTotals;
     logged: number;
     pctOfList: number;
   }[];
@@ -143,7 +298,7 @@ export function SegmentBreakdownCards({
 }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {breakdown.map(({ segment, sourceSegmentName, counts, dials, logged, pctOfList }) => {
+      {breakdown.map(({ segment, sourceSegmentName, counts, dials, attempts, logged, pctOfList }) => {
         const rows = dispositionBreakdown(counts)
           .slice()
           .sort((a, b) => b.count - a.count)
@@ -157,9 +312,21 @@ export function SegmentBreakdownCards({
                 <Pill tone="warm">Recycled{sourceSegmentName ? ` from: ${sourceSegmentName}` : ""}</Pill>
               )}
             </div>
-            <div className="text-[12px] text-[var(--db-muted)] mb-2">
+            <div className="text-[12px] text-[var(--db-muted)] mb-2 leading-relaxed">
               {logged} of {segment.listTotal} logged &middot; {pctOfList}% &middot; {dials} dials &middot;{" "}
-              {rawConnectRate(logged, dials).toFixed(1)}% connect
+              {contactRate(logged, dials).toFixed(1)}% contact rate
+              {segment.listTotal > 0 && (
+                <>
+                  <br />
+                  {(dials / segment.listTotal).toFixed(1)} dials per list contact (cap {ATTEMPT_CAP})
+                  {dials / segment.listTotal >= ATTEMPT_CAP && " \u2014 at the cap on average"}
+                  {attempts && (attempts.wrongNumber > 0 || attempts.aiScreener > 0) && (
+                    <>
+                      {" "}&middot; {attempts.aiScreener} AI screener, {attempts.wrongNumber} wrong number
+                    </>
+                  )}
+                </>
+              )}
             </div>
             {showLogic && segment.logic && (
               <div className="text-[12px] italic text-[var(--db-ink-soft)] mb-3">{segment.logic}</div>

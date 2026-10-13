@@ -1,7 +1,13 @@
 import { db } from "@/db";
 import { dailyLogEntries, engagements, recordings, reps, segments } from "@/db/schema";
 import { and, desc, eq, gte } from "drizzle-orm";
-import { EMPTY_COUNTS, sumCounts, totalCompleted, type DispositionCounts } from "@/lib/disposition";
+import {
+  EMPTY_COUNTS,
+  attemptTotals,
+  sumCounts,
+  totalCompleted,
+  type DispositionCounts,
+} from "@/lib/disposition";
 
 export type Range = "all" | "30d" | "7d";
 
@@ -94,6 +100,9 @@ export async function getEngagementCounts(
   let talkTime = 0;
   let recycledCounts: DispositionCounts = { ...EMPTY_COUNTS };
   let recycledDials = 0;
+  let noAnswer = 0;
+  let aiScreener = 0;
+  let wrongNumber = 0;
 
   // base counts/dials only apply to the all-time view (they represent pre-tool history)
   if (range === "all") {
@@ -118,6 +127,9 @@ export async function getEngagementCounts(
       counts = sumCounts(counts, row.counts);
       dials += row.dials;
       talkTime += row.talkTimeMinutes;
+      noAnswer += row.noAnswer ?? 0;
+      aiScreener += row.aiScreener ?? 0;
+      wrongNumber += row.wrongNumber ?? 0;
     }
   }
 
@@ -126,6 +138,13 @@ export async function getEngagementCounts(
     dials,
     talkTime,
     totalCompleted: totalCompleted(counts),
+    attempts: attemptTotals({
+      connected: totalCompleted(counts),
+      dials,
+      noAnswer,
+      aiScreener,
+      wrongNumber,
+    }),
     recycled: { dials: recycledDials, totalCompleted: totalCompleted(recycledCounts) },
     excludeRecycled,
   };
@@ -141,9 +160,15 @@ export async function getSegmentBreakdown(engagementId: string) {
     const segLogRows = logRows.filter((r) => r.segmentId === seg.id);
     let counts: DispositionCounts = { ...seg.baseCounts };
     let dials = seg.baseDials;
+    let noAnswer = 0;
+    let aiScreener = 0;
+    let wrongNumber = 0;
     for (const row of segLogRows) {
       counts = sumCounts(counts, row.counts);
       dials += row.dials;
+      noAnswer += row.noAnswer ?? 0;
+      aiScreener += row.aiScreener ?? 0;
+      wrongNumber += row.wrongNumber ?? 0;
     }
     const logged = totalCompleted(counts);
     return {
@@ -151,9 +176,28 @@ export async function getSegmentBreakdown(engagementId: string) {
       sourceSegmentName: seg.sourceSegmentId ? (nameById.get(seg.sourceSegmentId) ?? null) : null,
       counts,
       dials,
+      attempts: attemptTotals({ connected: logged, dials, noAnswer, aiScreener, wrongNumber }),
       logged,
       total: logged,
       pctOfList: seg.listTotal ? Math.round((logged / seg.listTotal) * 100) : 0,
     };
   });
+}
+
+/** Per-rep disposition counts for one list (all-time), for splitting Message vs. Rep problems. */
+export async function getRepBreakdown(engagementId: string, segmentId: string) {
+  const [repList, rows] = await Promise.all([
+    getReps(engagementId),
+    db
+      .select()
+      .from(dailyLogEntries)
+      .where(and(eq(dailyLogEntries.engagementId, engagementId), eq(dailyLogEntries.segmentId, segmentId))),
+  ]);
+  const byRep = new Map<string, DispositionCounts>();
+  for (const row of rows) {
+    byRep.set(row.repId, sumCounts(byRep.get(row.repId) ?? { ...EMPTY_COUNTS }, row.counts));
+  }
+  return repList
+    .filter((r) => byRep.has(r.id))
+    .map((r) => ({ repId: r.id, name: r.name, counts: byRep.get(r.id)! }));
 }

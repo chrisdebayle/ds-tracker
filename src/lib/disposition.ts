@@ -172,8 +172,71 @@ export function notMeReferredStatus(counts: DispositionCounts): Status {
   return notMeReferredPct(counts) >= 20 ? "watch" : "good";
 }
 
-export function rawConnectRate(completed: number, dials: number): number {
+/**
+ * Contact rate = Connected dials / total dials. A Connected attempt is a
+ * completed conversation, so this is completed / dials. It has its own
+ * denominator (dials) and never mixes with disposition percentages, which are
+ * always measured against completed conversations. No benchmark is set.
+ */
+export function contactRate(completed: number, dials: number): number {
   return pctNum(completed, dials);
+}
+
+// ---------------------------------------------------------------------------
+// Attempt Layer: what happens on a dial BEFORE a disposition. Only a Connected
+// attempt opens the 10 dispositions; the other three results have none.
+// ---------------------------------------------------------------------------
+
+export const ATTEMPT_CAP = 8;
+export const DORMANCY_DAYS = 90;
+
+export const ATTEMPT_RESULTS: { key: string; label: string; meaning: string; next: string }[] = [
+  {
+    key: "connected",
+    label: "Connected",
+    meaning: "Target contact picked up and said something (same test as a completed conversation)",
+    next: "Log one of the 10 dispositions",
+  },
+  {
+    key: "noAnswer",
+    label: "No Answer",
+    meaning: "Rang out, went to voicemail, or a gatekeeper screened the call",
+    next: "Stay in cadence; vary the time of day",
+  },
+  {
+    key: "aiScreener",
+    label: "AI Screener",
+    meaning: "A call-screening tool answered; no human conversation",
+    next: "Stay in cadence; try a different time or add a text or email touch",
+  },
+  {
+    key: "wrongNumber",
+    label: "Wrong Number",
+    meaning: "The number doesn't belong to the target contact or company",
+    next: "Pull from cadence; flag the record for a data fix",
+  },
+];
+
+export interface AttemptTotals {
+  /** Connected dials = completed conversations (derived from dispositions). */
+  connected: number;
+  noAnswer: number;
+  aiScreener: number;
+  wrongNumber: number;
+  /** Dials with no Attempt Result recorded (e.g. logged before the layer existed). */
+  unclassified: number;
+  dials: number;
+}
+
+export function attemptTotals(input: {
+  connected: number;
+  dials: number;
+  noAnswer: number;
+  aiScreener: number;
+  wrongNumber: number;
+}): AttemptTotals {
+  const classified = input.connected + input.noAnswer + input.aiScreener + input.wrongNumber;
+  return { ...input, unclassified: Math.max(0, input.dials - classified) };
 }
 
 /**
