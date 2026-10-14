@@ -31,6 +31,13 @@ export default function ReferencePage() {
           not count. Dispositions apply only once the target connects; everything before that is tracked here,
           so the 10 dispositions stay clean. Log one field on every dial: <strong>Attempt Result</strong>.
         </p>
+        <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
+          <strong>How this tracker handles research:</strong> if you judge an account NISL from research without
+          the target contact speaking, that isn&rsquo;t a completed conversation. Record the day&rsquo;s{" "}
+          <strong>Verbal Conversations</strong>; any dispositions beyond it are treated as NISL judged from
+          research. They stay visible and count as worked contacts on the list, but are left out of completed
+          conversations, benchmarks and the diagnosis.
+        </p>
         <DataTable
           columns={["Attempt Result", "Meaning", "What Happens Next"]}
           rows={ATTEMPT_RESULTS.map((r) => [r.label, r.meaning, r.next])}

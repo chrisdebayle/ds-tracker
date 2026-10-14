@@ -51,6 +51,7 @@ export default async function EditLogEntryPage({
           dials: entry.dials,
           talkTime: entry.talkTimeMinutes,
           counts: entry.counts,
+          verbalConversations: entry.verbalConversations,
           noAnswer: entry.noAnswer,
           aiScreener: entry.aiScreener,
           wrongNumber: entry.wrongNumber,

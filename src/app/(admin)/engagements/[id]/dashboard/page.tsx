@@ -19,6 +19,7 @@ import {
   CompositeMetricCards,
   DispositionBreakdownTable,
   RecycledActivityNote,
+  ResearchNislNote,
   KpiStrip,
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
@@ -44,7 +45,7 @@ export default async function DashboardPage({
   const engagement = await getEngagement(id);
   if (!engagement) notFound();
 
-  const [{ counts, dials, totalCompleted: completed, recycled, attempts }, allTime, segmentBreakdown, liveLink, origin] =
+  const [{ counts, dials, totalCompleted: completed, recycled, attempts, researchNisl }, allTime, segmentBreakdown, liveLink, origin] =
     await Promise.all([
       getEngagementCounts(id, range, { excludeRecycled }),
       range === "all" ? Promise.resolve(null) : getEngagementCounts(id, "all", { excludeRecycled }),
@@ -117,6 +118,7 @@ export default async function DashboardPage({
         excludeRecycled={excludeRecycled}
         toggleHref={`?range=${range}${excludeRecycled ? "" : "&recycled=exclude"}`}
       />
+      <ResearchNislNote count={researchNisl} />
       <AttemptMix attempts={attempts} />
       <BelowMinimumBanner completed={allTimeCompleted} />
 

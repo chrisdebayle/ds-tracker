@@ -31,6 +31,16 @@ export function BelowMinimumBanner({ completed }: { completed: number }) {
   );
 }
 
+export function ResearchNislNote({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <div className="text-[12px] text-[var(--db-muted)] -mt-4 mb-6">
+      Not counted above: {count} NISL account{count === 1 ? "" : "s"} judged from research without a verbal
+      conversation. Completed conversations and every percentage here reflect only calls where the target spoke.
+    </div>
+  );
+}
+
 export function RecycledActivityNote({
   recycled,
   excludeRecycled,
@@ -291,6 +301,8 @@ export function SegmentBreakdownCards({
     counts: DispositionCounts;
     dials: number;
     attempts?: AttemptTotals;
+    completed?: number;
+    researchNisl?: number;
     logged: number;
     pctOfList: number;
   }[];
@@ -298,7 +310,8 @@ export function SegmentBreakdownCards({
 }) {
   return (
     <div className="grid grid-cols-2 gap-4">
-      {breakdown.map(({ segment, sourceSegmentName, counts, dials, attempts, logged, pctOfList }) => {
+      {breakdown.map(({ segment, sourceSegmentName, counts, dials, attempts, completed: completedProp, researchNisl = 0, logged, pctOfList }) => {
+        const completed = completedProp ?? logged;
         const rows = dispositionBreakdown(counts)
           .slice()
           .sort((a, b) => b.count - a.count)
@@ -314,7 +327,14 @@ export function SegmentBreakdownCards({
             </div>
             <div className="text-[12px] text-[var(--db-muted)] mb-2 leading-relaxed">
               {logged} of {segment.listTotal} logged &middot; {pctOfList}% &middot; {dials} dials &middot;{" "}
-              {contactRate(logged, dials).toFixed(1)}% contact rate
+              {contactRate(completed, dials).toFixed(1)}% contact rate
+              {researchNisl > 0 && (
+                <>
+                  <br />
+                  {completed} verbal conversations + {researchNisl} NISL judged from research (not counted as
+                  conversations)
+                </>
+              )}
               {segment.listTotal > 0 && (
                 <>
                   <br />

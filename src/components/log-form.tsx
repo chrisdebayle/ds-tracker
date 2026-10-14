@@ -2,7 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { DISP_META, contactRate } from "@/lib/disposition";
+import {
+  DISP_META,
+  contactRate,
+  conversationCounts,
+  verbalMismatch,
+  type DispositionCounts,
+} from "@/lib/disposition";
 import { Field, inputClass, Button, Card } from "@/components/ui";
 
 type Option = { id: string; name: string };
@@ -14,6 +20,7 @@ export interface LogFormInitial {
   dials: number;
   talkTime: number;
   counts: Record<string, number>;
+  verbalConversations: number | null;
   // null = never recorded (entry predates the Attempt Layer)
   noAnswer: number | null;
   aiScreener: number | null;
@@ -63,13 +70,26 @@ export function LogForm({
       ? Object.fromEntries(DISP_META.map((d) => [d.key, String(initial.counts[d.key] ?? 0)]))
       : emptyCounts()
   );
+  const [verbal, setVerbal] = useState(
+    initial?.verbalConversations === null || initial?.verbalConversations === undefined
+      ? isEdit
+        ? ""
+        : "0"
+      : String(initial.verbalConversations)
+  );
   const [attempts, setAttempts] = useState<Record<AttemptKey, string>>({
     noAnswer: attemptDefault(initial?.noAnswer),
     aiScreener: attemptDefault(initial?.aiScreener),
     wrongNumber: attemptDefault(initial?.wrongNumber),
   });
 
-  const totalCompleted = DISP_META.reduce((sum, d) => sum + (parseInt(counts[d.key]) || 0), 0);
+  const dispositionTotal = DISP_META.reduce((sum, d) => sum + (parseInt(counts[d.key]) || 0), 0);
+  const numericCounts = Object.fromEntries(DISP_META.map((d) => [d.key, parseInt(counts[d.key]) || 0])) as DispositionCounts;
+  const verbalNum = verbal === "" ? null : parseInt(verbal) || 0;
+  const verbalInvalid = verbalNum !== null && verbalMismatch(numericCounts, verbalNum);
+  const split = conversationCounts(numericCounts, verbalNum);
+  // Completed conversations = dispositions that came from a real conversation.
+  const totalCompleted = dispositionTotal - split.researchNisl;
   const dialsNum = parseInt(dials) || 0;
   const rate = contactRate(totalCompleted, dialsNum);
 
@@ -80,7 +100,7 @@ export function LogForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!repId || !segmentId) return;
+    if (!repId || !segmentId || verbalInvalid) return;
 
     const fd = new FormData();
     fd.set("date", date);
@@ -89,6 +109,7 @@ export function LogForm({
     fd.set("dials", dials);
     fd.set("talkTime", talkTime);
     for (const d of DISP_META) fd.set(`count_${d.key}`, counts[d.key] || "0");
+    if (verbal !== "") fd.set("verbalConversations", verbal);
     // Untouched (all blank) attempt fields stay "not recorded" instead of becoming zeros.
     if (anyAttemptFilled) {
       for (const f of ATTEMPT_FIELDS) fd.set(f.key, attempts[f.key] || "0");
@@ -100,6 +121,7 @@ export function LogForm({
         setDials("0");
         setTalkTime("0");
         setCounts(emptyCounts());
+        setVerbal("0");
         setAttempts({ noAnswer: "0", aiScreener: "0", wrongNumber: "0" });
         router.refresh();
       }
@@ -192,6 +214,43 @@ export function LogForm({
           </div>
         </div>
 
+        <div className="grid grid-cols-5 gap-3 items-start">
+          <Field label="Verbal Conversations">
+            <input
+              type="number"
+              min={0}
+              value={verbal}
+              placeholder="n/a"
+              onChange={(e) => setVerbal(e.target.value)}
+              className={inputClass}
+            />
+            <span className="text-[10px] text-[var(--db-muted)]">spoke with the target contact</span>
+          </Field>
+          <div className="col-span-4 text-[11.5px] leading-snug pt-6">
+            {verbalNum === null ? (
+              <span className="text-[var(--db-muted)]">
+                Not recorded: all {dispositionTotal} dispositions are counted as conversations. Enter the number of
+                calls where the target contact actually spoke to separate them from accounts judged from research.
+              </span>
+            ) : verbalInvalid ? (
+              <span className="text-[var(--db-fail)] font-semibold">
+                {dispositionTotal} dispositions vs {verbalNum} verbal conversations: only NISL can be logged
+                without a conversation, and the gap ({dispositionTotal - verbalNum}) is larger than the NISL count
+                ({numericCounts.nisl}).
+              </span>
+            ) : split.researchNisl > 0 ? (
+              <span className="text-[var(--db-accent-800)]">
+                {split.researchNisl} NISL judged from research without a conversation: tracked, but not counted as
+                completed conversations or in the benchmark percentages.
+              </span>
+            ) : (
+              <span className="text-[var(--db-pass)] font-semibold">
+                All {dispositionTotal} dispositions came from verbal conversations.
+              </span>
+            )}
+          </div>
+        </div>
+
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-[var(--db-ink-soft)] mb-2">
             Attempt Result &mdash; dials that never became a conversation
@@ -249,7 +308,7 @@ export function LogForm({
               <div className="font-display text-[20px] font-semibold">{rate.toFixed(1)}%</div>
             </div>
           </div>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || verbalInvalid}>
             {isPending ? "Saving…" : isEdit ? "Save Changes" : "+ Log Entry"}
           </Button>
         </div>

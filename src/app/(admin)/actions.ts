@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { dailyLogEntries, engagements, recordings, reps, segments } from "@/db/schema";
-import { EMPTY_COUNTS, DISPOSITION_KEYS, type DispositionCounts } from "@/lib/disposition";
+import { EMPTY_COUNTS, DISPOSITION_KEYS, verbalMismatch, type DispositionCounts } from "@/lib/disposition";
 import { getOrCreateShareLink, regenerateShareLink, revokeShareLink } from "@/lib/share-tokens";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -28,6 +28,19 @@ function countsFromForm(formData: FormData): DispositionCounts {
 function attemptFromForm(formData: FormData, key: string): number | null {
   if (!formData.has(key)) return null;
   return Math.max(0, parseInt(String(formData.get(key) ?? "0"), 10) || 0);
+}
+
+/** Verbal conversations: null = not recorded. Rejects a count that dispositions can't explain. */
+function verbalFromForm(formData: FormData, counts: DispositionCounts): number | null {
+  const raw = String(formData.get("verbalConversations") ?? "");
+  if (raw === "") return null;
+  const verbal = Math.max(0, parseInt(raw, 10) || 0);
+  if (verbalMismatch(counts, verbal)) {
+    throw new Error(
+      "Only NISL can be logged without a conversation: dispositions exceed verbal conversations by more than the NISL count"
+    );
+  }
+  return verbal;
 }
 
 const SAFE_URL_SCHEME = /^https?:\/\//i;
@@ -162,6 +175,7 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
   await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
   await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
 
+  const counts = countsFromForm(formData);
   await db.insert(dailyLogEntries).values({
     engagementId,
     segmentId,
@@ -169,7 +183,8 @@ export async function addLogEntry(engagementId: string, formData: FormData) {
     date,
     dials: Math.max(0, parseInt(String(formData.get("dials") ?? "0"), 10) || 0),
     talkTimeMinutes: Math.max(0, parseInt(String(formData.get("talkTime") ?? "0"), 10) || 0),
-    counts: countsFromForm(formData),
+    counts,
+    verbalConversations: verbalFromForm(formData, counts),
     noAnswer: attemptFromForm(formData, "noAnswer"),
     aiScreener: attemptFromForm(formData, "aiScreener"),
     wrongNumber: attemptFromForm(formData, "wrongNumber"),
@@ -192,6 +207,7 @@ export async function updateLogEntry(engagementId: string, entryId: string, form
   await assertBelongsToEngagement(segments, segmentId, engagementId, "Target list");
   await assertBelongsToEngagement(reps, repId, engagementId, "Rep");
 
+  const counts = countsFromForm(formData);
   await db
     .update(dailyLogEntries)
     .set({
@@ -200,7 +216,8 @@ export async function updateLogEntry(engagementId: string, entryId: string, form
       date,
       dials: Math.max(0, parseInt(String(formData.get("dials") ?? "0"), 10) || 0),
       talkTimeMinutes: Math.max(0, parseInt(String(formData.get("talkTime") ?? "0"), 10) || 0),
-      counts: countsFromForm(formData),
+      counts,
+      verbalConversations: verbalFromForm(formData, counts),
       noAnswer: attemptFromForm(formData, "noAnswer"),
       aiScreener: attemptFromForm(formData, "aiScreener"),
       wrongNumber: attemptFromForm(formData, "wrongNumber"),

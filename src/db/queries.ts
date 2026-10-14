@@ -4,6 +4,7 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import {
   EMPTY_COUNTS,
   attemptTotals,
+  conversationCounts,
   sumCounts,
   totalCompleted,
   type DispositionCounts,
@@ -103,6 +104,7 @@ export async function getEngagementCounts(
   let noAnswer = 0;
   let aiScreener = 0;
   let wrongNumber = 0;
+  let researchNisl = 0;
 
   // base counts/dials only apply to the all-time view (they represent pre-tool history)
   if (range === "all") {
@@ -119,12 +121,14 @@ export async function getEngagementCounts(
   }
   for (const row of logRows) {
     const isRecycled = recycledIds.has(row.segmentId);
+    const conv = conversationCounts(row.counts, row.verbalConversations);
     if (isRecycled) {
-      recycledCounts = sumCounts(recycledCounts, row.counts);
+      recycledCounts = sumCounts(recycledCounts, conv.counts);
       recycledDials += row.dials;
     }
     if (!(excludeRecycled && isRecycled)) {
-      counts = sumCounts(counts, row.counts);
+      researchNisl += conv.researchNisl;
+      counts = sumCounts(counts, conv.counts);
       dials += row.dials;
       talkTime += row.talkTimeMinutes;
       noAnswer += row.noAnswer ?? 0;
@@ -145,6 +149,7 @@ export async function getEngagementCounts(
       aiScreener,
       wrongNumber,
     }),
+    researchNisl,
     recycled: { dials: recycledDials, totalCompleted: totalCompleted(recycledCounts) },
     excludeRecycled,
   };
@@ -163,22 +168,31 @@ export async function getSegmentBreakdown(engagementId: string) {
     let noAnswer = 0;
     let aiScreener = 0;
     let wrongNumber = 0;
+    let researchNisl = 0;
     for (const row of segLogRows) {
-      counts = sumCounts(counts, row.counts);
+      const conv = conversationCounts(row.counts, row.verbalConversations);
+      counts = sumCounts(counts, conv.counts);
+      researchNisl += conv.researchNisl;
       dials += row.dials;
       noAnswer += row.noAnswer ?? 0;
       aiScreener += row.aiScreener ?? 0;
       wrongNumber += row.wrongNumber ?? 0;
     }
-    const logged = totalCompleted(counts);
+    const completed = totalCompleted(counts);
+    // "logged" = contacts worked on this list: real conversations plus NISL
+    // accounts judged from research. Contact rate and benchmarks use only
+    // `completed` (real conversations).
+    const logged = completed + researchNisl;
     return {
       segment: seg,
       sourceSegmentName: seg.sourceSegmentId ? (nameById.get(seg.sourceSegmentId) ?? null) : null,
       counts,
       dials,
-      attempts: attemptTotals({ connected: logged, dials, noAnswer, aiScreener, wrongNumber }),
+      attempts: attemptTotals({ connected: completed, dials, noAnswer, aiScreener, wrongNumber }),
+      completed,
+      researchNisl,
       logged,
-      total: logged,
+      total: completed,
       pctOfList: seg.listTotal ? Math.round((logged / seg.listTotal) * 100) : 0,
     };
   });
@@ -195,7 +209,10 @@ export async function getRepBreakdown(engagementId: string, segmentId: string) {
   ]);
   const byRep = new Map<string, DispositionCounts>();
   for (const row of rows) {
-    byRep.set(row.repId, sumCounts(byRep.get(row.repId) ?? { ...EMPTY_COUNTS }, row.counts));
+    byRep.set(
+      row.repId,
+      sumCounts(byRep.get(row.repId) ?? { ...EMPTY_COUNTS }, conversationCounts(row.counts, row.verbalConversations).counts)
+    );
   }
   return repList
     .filter((r) => byRep.has(r.id))

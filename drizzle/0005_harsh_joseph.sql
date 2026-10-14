@@ -1,0 +1,1 @@
+ALTER TABLE "daily_log_entries" ADD COLUMN "verbal_conversations" integer;

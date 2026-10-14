@@ -102,6 +102,12 @@ export const dailyLogEntries = pgTable("daily_log_entries", {
   noAnswer: integer("no_answer"),
   aiScreener: integer("ai_screener"),
   wrongNumber: integer("wrong_number"),
+  // Calls where a real two-way conversation happened with the target contact.
+  // NULL = not recorded (every disposition is then treated as a conversation,
+  // the original behavior). When set, any dispositions beyond it are NISL
+  // accounts judged from research without a conversation: tracked, but not
+  // counted as completed conversations.
+  verbalConversations: integer("verbal_conversations"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

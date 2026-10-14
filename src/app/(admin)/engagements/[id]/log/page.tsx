@@ -4,7 +4,7 @@ import { getDailyLog, getEngagement, getReps, getSegments } from "@/db/queries";
 import { addLogEntry } from "../../../actions";
 import { LogForm } from "@/components/log-form";
 import { DataTable } from "@/components/ui";
-import { DISP_META, contactRate, totalCompleted } from "@/lib/disposition";
+import { DISP_META, contactRate, conversationCounts, totalCompleted } from "@/lib/disposition";
 import { nameById } from "@/lib/lookup";
 
 export default async function DailyLogPage({ params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +32,7 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
     "Rep",
     "List",
     "Dials",
+    "Verbal",
     "Completed",
     "Contact Rate",
     "No Answer",
@@ -43,12 +44,13 @@ export default async function DailyLogPage({ params }: { params: Promise<{ id: s
   ];
 
   const rows = entries.map((entry) => {
-    const completed = totalCompleted(entry.counts);
+    const completed = totalCompleted(conversationCounts(entry.counts, entry.verbalConversations).counts);
     return [
       entry.date,
       repName(entry.repId),
       segName(entry.segmentId),
       entry.dials,
+      attempt(entry.verbalConversations),
       completed,
       `${contactRate(completed, entry.dials).toFixed(1)}%`,
       attempt(entry.noAnswer),

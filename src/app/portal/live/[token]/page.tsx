@@ -8,6 +8,7 @@ import {
   CompositeMetricCards,
   DispositionBreakdownTable,
   RecycledActivityNote,
+  ResearchNislNote,
   KpiStrip,
   SegmentBreakdownCards,
 } from "@/components/dashboard-blocks";
@@ -107,7 +108,7 @@ async function DashboardTab({
   range: Range;
   excludeRecycled: boolean;
 }) {
-  const [{ counts, dials, totalCompleted: completed, recycled, attempts }, allTime, segmentBreakdown] = await Promise.all([
+  const [{ counts, dials, totalCompleted: completed, recycled, attempts, researchNisl }, allTime, segmentBreakdown] = await Promise.all([
     getEngagementCounts(engagementId, range, { excludeRecycled }),
     range === "all" ? Promise.resolve(null) : getEngagementCounts(engagementId, "all", { excludeRecycled }),
     getSegmentBreakdown(engagementId),
@@ -141,6 +142,7 @@ async function DashboardTab({
         excludeRecycled={excludeRecycled}
         toggleHref={`${base}?tab=dashboard&range=${range}${excludeRecycled ? "" : "&recycled=exclude"}`}
       />
+      <ResearchNislNote count={researchNisl} />
       <AttemptMix attempts={attempts} />
       <BelowMinimumBanner completed={allTimeCompleted} />
 

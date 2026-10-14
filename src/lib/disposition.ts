@@ -148,6 +148,28 @@ export function totalCompleted(counts: DispositionCounts): number {
   return DISPOSITION_KEYS.reduce((sum, key) => sum + (counts[key] ?? 0), 0);
 }
 
+/**
+ * Splits one log entry into real conversations and NISL accounts judged from
+ * research. When `verbal` (verbal conversations) is recorded, any dispositions
+ * beyond it are NISL judged without speaking to the target: they stay visible
+ * as `researchNisl` but are removed from the conversation-based counts, since
+ * a completed conversation means the target contact actually spoke. When
+ * `verbal` is null (not recorded) every disposition counts, as before.
+ */
+export function conversationCounts(
+  counts: DispositionCounts,
+  verbal: number | null | undefined
+): { counts: DispositionCounts; researchNisl: number } {
+  if (verbal === null || verbal === undefined) return { counts, researchNisl: 0 };
+  const excess = Math.min(Math.max(0, totalCompleted(counts) - verbal), counts.nisl);
+  return { counts: { ...counts, nisl: counts.nisl - excess }, researchNisl: excess };
+}
+
+/** True when more dispositions exceed verbal conversations than NISL can explain. */
+export function verbalMismatch(counts: DispositionCounts, verbal: number): boolean {
+  return totalCompleted(counts) - verbal > counts.nisl;
+}
+
 export function belowMinimum(counts: DispositionCounts): boolean {
   return totalCompleted(counts) < MIN_SAMPLE_SIZE;
 }
