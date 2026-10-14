@@ -14,6 +14,11 @@ import {
 
 export const CONFIRM_SAMPLE_SIZE = 500;
 
+// NISL (Research) rate = NISL (Research) / contacts worked, where contacts
+// worked = completed conversations + NISL (Research).
+export const RESEARCH_WATCH_PCT = 30;
+export const RESEARCH_FAULTY_PCT = 50;
+
 export type ConfidenceTier = "insufficient" | "directional" | "confirmed";
 
 export function confidenceTier(completed: number): ConfidenceTier {
@@ -25,7 +30,9 @@ export function confidenceTier(completed: number): ConfidenceTier {
 export type PillarKey = "list" | "message" | "rep";
 
 export interface DiagnosticFinding {
-  id: "titles" | "interest" | "ask" | "icp" | "channel";
+  id: "titles" | "interest" | "ask" | "icp" | "channel" | "sourcing";
+  /** Only set on the research-NISL rule: how loudly to read it. */
+  severity?: "info" | "watch" | "critical";
   pillar: string; // display label, e.g. "LIST" or "MESSAGE or REP"
   rank: number; // priority rank: 0 = List, 1 = Message, 2 = Rep
   title: string;
@@ -49,13 +56,28 @@ export interface Diagnosis {
     notInterested: number;
     nisl: number;
     nurture: number;
+    contactsWorked: number;
+    researchNislRate: number;
   };
 }
 
 const f1 = (n: number) => `${n.toFixed(1)}%`;
 
-export function diagnose(counts: DispositionCounts): Diagnosis {
+const SEVERITY_ORDER = { critical: 0, watch: 1, undefined: 2, info: 3 } as const;
+
+// Framework priority (List -> Message -> Rep); within a pillar, a faulty
+// list-building signal leads and the soft "tighten" note trails.
+function sortFindings(a: DiagnosticFinding, b: DiagnosticFinding) {
+  return (
+    a.rank - b.rank ||
+    SEVERITY_ORDER[String(a.severity) as keyof typeof SEVERITY_ORDER] -
+      SEVERITY_ORDER[String(b.severity) as keyof typeof SEVERITY_ORDER]
+  );
+}
+
+export function diagnose(counts: DispositionCounts, researchNisl = 0): Diagnosis {
   const completed = totalCompleted(counts);
+  const contactsWorked = completed + researchNisl;
   const pct = (n: number) => pctNum(n, completed);
 
   const metrics = {
@@ -66,14 +88,45 @@ export function diagnose(counts: DispositionCounts): Diagnosis {
     notInterested: pct(counts.notInterested),
     nisl: pct(counts.nisl),
     nurture: pct(counts.nurture),
+    contactsWorked,
+    researchNislRate: pctNum(researchNisl, contactsWorked),
   };
 
   const tier = confidenceTier(completed);
-  if (tier === "insufficient") {
-    return { completed, tier, findings: [], healthy: false, metrics };
+  const findings: DiagnosticFinding[] = [];
+
+  // LIST: bad-fit accounts getting through list building. Measured against
+  // contacts worked, so it is independent of the conversation-based tier.
+  if (researchNisl > 0 && contactsWorked >= MIN_SAMPLE_SIZE) {
+    const rate = metrics.researchNislRate;
+    const severity = rate >= RESEARCH_FAULTY_PCT ? "critical" : rate >= RESEARCH_WATCH_PCT ? "watch" : "info";
+    findings.push({
+      id: "sourcing",
+      pillar: "LIST",
+      rank: 0,
+      severity,
+      title:
+        severity === "critical"
+          ? "List building is faulty: refine immediately"
+          : severity === "watch"
+            ? "Bad-fit accounts are getting through list building"
+            : "List could use further tightening",
+      rule: `NISL (Research) is ${f1(rate)} of contacts worked (${researchNisl} of ${contactsWorked}; watch \u2265 ${RESEARCH_WATCH_PCT}%, faulty \u2265 ${RESEARCH_FAULTY_PCT}%)`,
+      meaning:
+        severity === "critical"
+          ? "The list-building process is faulty. Refine it immediately before pulling more contacts."
+          : severity === "watch"
+            ? "Account fit is failing upstream of the call: a large share of pulled accounts have to be ruled out from research before anyone speaks. Tighten criteria before the next pull."
+            : "Some accounts are still being ruled out from research. Not a diagnosis on its own.",
+      action:
+        "Pull the accounts ruled out from research and compare their firmographics to your positive-outcome accounts (Meeting, Activated, Not Now). Identify the filter that should have excluded them, and fix it at the source before the next list build.",
+    });
   }
 
-  const findings: DiagnosticFinding[] = [];
+  if (tier === "insufficient") {
+    findings.sort(sortFindings);
+    return { completed, tier, findings, healthy: false, metrics };
+  }
 
   // LIST: titles are off
   if (metrics.notMeReferred >= 20) {
@@ -158,7 +211,7 @@ export function diagnose(counts: DispositionCounts): Diagnosis {
     });
   }
 
-  findings.sort((a, b) => a.rank - b.rank);
+  findings.sort(sortFindings);
 
   const healthy =
     metrics.meetingActivated >= 20 &&

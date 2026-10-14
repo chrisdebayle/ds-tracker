@@ -63,7 +63,7 @@ export default async function DashboardPage({
   // "interest isn't landing" rule fires for that list.
   const diagnosisItems = await Promise.all(
     segmentBreakdown.map(async (b) => {
-      const diagnosis = diagnose(b.counts);
+      const diagnosis = diagnose(b.counts, b.researchNisl);
       const needsReps = diagnosis.findings.some((f) => f.id === "interest");
       const reps = needsReps ? await getRepBreakdown(id, b.segment.id) : [];
       return {

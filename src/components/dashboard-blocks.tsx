@@ -219,30 +219,37 @@ export function DiagnosisPanel({
           </div>
           <div className="text-[12px] text-[var(--db-muted)] mb-3">
             {d.completed} completed conversations
+            {d.metrics.contactsWorked > d.completed &&
+              ` \u00b7 ${d.metrics.contactsWorked - d.completed} NISL (Research) \u00b7 ${d.metrics.contactsWorked} contacts worked (${d.metrics.researchNislRate.toFixed(1)}% research NISL${d.metrics.contactsWorked < MIN_SAMPLE_SIZE ? ", too early to act on" : ""})`}
             {d.tier === "insufficient" && ` \u00b7 diagnosis unlocks at ${MIN_SAMPLE_SIZE} (${MIN_SAMPLE_SIZE - d.completed} to go)`}
             {d.tier === "directional" && ` \u00b7 confirm findings at ${CONFIRM_SAMPLE_SIZE}+ (${CONFIRM_SAMPLE_SIZE - d.completed} to go)`}
           </div>
 
-          {d.tier === "insufficient" ? (
-            <p className="text-[13px] text-[var(--db-ink-soft)]">
+          {d.tier === "insufficient" && (
+            <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
               The framework says to draw no conclusions before {MIN_SAMPLE_SIZE} completed conversations. Keep
               logging; this list is its own run, so earlier data from other lists doesn&rsquo;t count toward it.
             </p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {d.findings.length === 0 && (
-                <p className="text-[13px] text-[var(--db-ink-soft)]">
-                  {d.healthy
-                    ? "Healthy: executing across all pillars. Activate the bucket-specific follow-up sequences (Activated: hot sequence within 48 hours; Not Now: 30/60/90 day nurture; Referred: immediate outreach; Not Interested: dormant, new hook in 6 months)."
-                    : `No diagnostic rule has fired, but Meeting + Activated is ${d.metrics.meetingActivated.toFixed(1)}% (floor 20%), so this isn't yet healthy.`}
-                </p>
-              )}
+          )}
+          <div className="flex flex-col gap-3">
+            {d.tier !== "insufficient" && d.findings.length === 0 && (
+              <p className="text-[13px] text-[var(--db-ink-soft)]">
+                {d.healthy
+                  ? "Healthy: executing across all pillars. Activate the bucket-specific follow-up sequences (Activated: hot sequence within 48 hours; Not Now: 30/60/90 day nurture; Referred: immediate outreach; Not Interested: dormant, new hook in 6 months)."
+                  : `No diagnostic rule has fired, but Meeting + Activated is ${d.metrics.meetingActivated.toFixed(1)}% (floor 20%), so this isn't yet healthy.`}
+              </p>
+            )}
               {d.findings.map((f, i) => (
                 <div key={f.id} className="border-l-[3px] border-[var(--db-primary)] pl-3">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--db-primary)]">
                       {f.pillar}
                     </span>
+                    {f.severity && (
+                      <Pill tone={f.severity === "critical" ? "fail" : f.severity === "watch" ? "warm" : "neutral"}>
+                        {f.severity === "critical" ? "Faulty" : f.severity === "watch" ? "Watch" : "Tighten"}
+                      </Pill>
+                    )}
                     {i === 0 && d.findings.length > 1 && <Pill tone="fail">Fix first</Pill>}
                   </div>
                   <div className="text-[13px] font-semibold text-[var(--db-dark)]">{f.title}</div>
@@ -276,8 +283,7 @@ export function DiagnosisPanel({
                   )}
                 </div>
               ))}
-            </div>
-          )}
+          </div>
         </Card>
       ))}
     </div>
