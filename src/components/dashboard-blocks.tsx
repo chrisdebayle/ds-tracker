@@ -36,7 +36,7 @@ export function ResearchNislNote({ count }: { count: number }) {
   return (
     <div className="text-[12px] text-[var(--db-muted)] -mt-4 mb-6">
       Not counted above: {count} NISL account{count === 1 ? "" : "s"} judged from research without a verbal
-      conversation. Completed conversations and every percentage here reflect only calls where the target spoke.
+      conversation. Completed conversations and every percentage here reflect only calls where a human spoke.
     </div>
   );
 }
