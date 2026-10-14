@@ -28,15 +28,10 @@ export default function ReferencePage() {
         <p className="text-sm text-[var(--db-ink-soft)] mb-3">
           A <strong>completed conversation</strong> is any call where you spoke directly with the target
           contact, however short. Gatekeepers, voicemails, no-answers, AI call screeners and wrong numbers do
-          not count. Dispositions apply only once the target connects; everything before that is tracked here,
-          so the 10 dispositions stay clean. Log one field on every dial: <strong>Attempt Result</strong>.
-        </p>
-        <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
-          <strong>How this tracker handles research:</strong> if you judge an account NISL from research without
-          the target contact speaking, that isn&rsquo;t a completed conversation. Record the day&rsquo;s{" "}
-          <strong>Verbal Conversations</strong>; any dispositions beyond it are treated as NISL judged from
-          research. They stay visible and count as worked contacts on the list, but are left out of completed
-          conversations, benchmarks and the diagnosis.
+          not count. An account you rule out from research without the target speaking is not a completed
+          conversation either. Dispositions apply only once the target connects (the one exception is NISL
+          judged from research, below); everything before that is tracked here, so the 10 dispositions stay
+          clean. Log one field on every dial: <strong>Attempt Result</strong>.
         </p>
         <DataTable
           columns={["Attempt Result", "Meaning", "What Happens Next"]}
@@ -73,6 +68,33 @@ export default function ReferencePage() {
             </div>
           </Card>
         </div>
+
+        <h3 className="font-display text-[14px] font-semibold text-[var(--db-dark)] mt-6 mb-2">
+          NISL Judged From Research (No Conversation)
+        </h3>
+        <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
+          An account can be ruled out as outside your ICP from research (website, LinkedIn, firmographics)
+          while you work the list, without the target contact ever speaking. The account is finished: it
+          leaves cadence under the NISL follow-up rule. But no one said anything, so it is{" "}
+          <strong>not a completed conversation</strong>. Log it as <strong>NISL (Research)</strong>. In this
+          tracker, enter the day&rsquo;s <strong>Verbal Conversations</strong>; dispositions beyond it are
+          treated as NISL (Research).
+        </p>
+        <Card>
+          <RulesList
+            items={[
+              "Only NISL qualifies. Account fit is the one outcome that can be determined without the contact. Every other disposition records something the contact said or did on a call, so it requires a Connected attempt.",
+              "Tracked beside the dispositions, not inside them. NISL (Research) is not counted in completed conversations, in the 200 / 500 sample thresholds, or in any disposition percentage, including the NISL rate used by the ICP rule.",
+              "Still counts as worked. The contact leaves cadence, so it counts toward how far you are through the list. It has no Connected attempt, so it sits outside contact rate.",
+              "Tally check. Dispositions beyond Verbal Conversations are NISL (Research). If the gap is larger than your NISL count, a non-NISL disposition was logged without a conversation; recheck it.",
+            ]}
+          />
+        </Card>
+        <p className="text-[12px] text-[var(--db-muted)] mt-3">
+          Why the split matters: if research-judged accounts are logged as ordinary NISL dispositions, completed
+          conversations are inflated, the NISL rate is overstated, the ICP rule can fire on accounts you never
+          spoke to, and the 200-conversation minimum unlocks early.
+        </p>
       </div>
 
       <div>
@@ -118,7 +140,7 @@ export default function ReferencePage() {
             items={[
               "Log before you hang up, or within 2 minutes of ending the call. End-of-day logging from memory produces inaccurate data that makes healthy campaigns look broken and broken campaigns look fine.",
               "One disposition per completed conversation. No call goes untagged. If your dialer auto-prompts for a disposition, treat it as mandatory before the next call.",
-              "Log an Attempt Result on every dial. Only a Connected attempt opens a disposition.",
+              "Log an Attempt Result on every dial. Only a Connected attempt opens a disposition, except NISL judged from research.",
               "When a call is ambiguous, use the Confused Pairs decision rules above rather than guessing.",
               "DNC is permanent: never re-engage a contact marked DNC, regardless of list or campaign.",
             ]}
