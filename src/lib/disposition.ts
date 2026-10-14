@@ -66,7 +66,7 @@ export const REFERENCE_DEFS: [string, string, string][] = [
   ["Not Now", "Timing isn't right; acknowledged fit but not buying now", "10–20%"],
   ["Not Me", "Right company, wrong person, and they don't know who the right person is", "< 10%"],
   ["Referred", "Right company, wrong person, and they gave you the right contact", "< 10%"],
-  ["No Longer With Company", "Right company, but the target contact has left", "< 5%"],
+  ["No Longer With Company", "Right company, but the target contact has left, confirmed by voice by anyone you speak with (gatekeeper, colleague, or replacement). Counts as a completed conversation", "< 5%"],
   ["Not Interested", "Conversation ran its course; no interest generated", "< 15%"],
   ["DNC", "Prospect explicitly requested removal; permanent, never re-engage", "honor all; flag if > 3%"],
   ["Nurture", "Wrong channel; prospect prefers email or LinkedIn over phone", "< 5%"],
@@ -216,13 +216,15 @@ export const ATTEMPT_RESULTS: { key: string; label: string; meaning: string; nex
   {
     key: "connected",
     label: "Connected",
-    meaning: "Target contact picked up and said something (same test as a completed conversation)",
+    meaning:
+      "Target contact picked up and said something, or any human confirmed by voice that the contact has left (No Longer With Company). Same test as a completed conversation",
     next: "Log one of the 10 dispositions",
   },
   {
     key: "noAnswer",
     label: "No Answer",
-    meaning: "Rang out, went to voicemail, or a gatekeeper screened the call",
+    meaning:
+      "Rang out, went to voicemail, or a gatekeeper screened the call. If the gatekeeper confirms the contact has left, the attempt is Connected",
     next: "Stay in cadence; vary the time of day",
   },
   {

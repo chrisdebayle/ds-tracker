@@ -224,13 +224,13 @@ export function LogForm({
               onChange={(e) => setVerbal(e.target.value)}
               className={inputClass}
             />
-            <span className="text-[10px] text-[var(--db-muted)]">spoke with the target contact</span>
+            <span className="text-[10px] text-[var(--db-muted)]">a human spoke: the target, or anyone confirming a contact left</span>
           </Field>
           <div className="col-span-4 text-[11.5px] leading-snug pt-6">
             {verbalNum === null ? (
               <span className="text-[var(--db-muted)]">
                 Not recorded: all {dispositionTotal} dispositions are counted as conversations. Enter the number of
-                calls where the target contact actually spoke to separate them from accounts judged from research.
+                calls where a human actually spoke (the target, or anyone confirming a contact left) to separate them from accounts judged from research.
               </span>
             ) : verbalInvalid ? (
               <span className="text-[var(--db-fail)] font-semibold">

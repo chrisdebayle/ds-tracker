@@ -28,7 +28,8 @@ export default function ReferencePage() {
         <p className="text-sm text-[var(--db-ink-soft)] mb-3">
           A <strong>completed conversation</strong> is any call where you spoke directly with the target
           contact, however short. Gatekeepers, voicemails, no-answers, AI call screeners and wrong numbers do
-          not count. An account you rule out from research without the target speaking is not a completed
+          not count. The one exception is No Longer With Company: if any human being confirms by voice that the
+          target contact has left, that call counts. An account you rule out from research without the target speaking is not a completed
           conversation either. Dispositions apply only once the target connects (the one exception is NISL
           judged from research, below); everything before that is tracked here, so the 10 dispositions stay
           clean. Log one field on every dial: <strong>Attempt Result</strong>.
