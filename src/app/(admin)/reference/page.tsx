@@ -88,7 +88,7 @@ export default function ReferencePage() {
               "Tracked beside the dispositions, not inside them. NISL (Research) is not counted in completed conversations, in the 200 / 500 sample thresholds, or in any disposition percentage, including the NISL rate used by the ICP rule.",
               "Still counts as worked. The contact leaves cadence, so it counts toward how far you are through the list. It has no Connected attempt, so it sits outside contact rate.",
               "Tally check. Dispositions beyond Verbal Conversations are NISL (Research). If the gap is larger than your NISL count, a non-NISL disposition was logged without a conversation; recheck it.",
-              "NISL (Research) rate = NISL (Research) ÷ contacts worked (completed conversations + NISL (Research)), measured once 200+ contacts are worked. Under 30%: the list could use further tightening. 30% to 49%: watch, bad-fit accounts are slipping through list building. 50% or more: list building is faulty, refine it immediately before pulling more contacts.",
+              "NISL (Research) rate = NISL (Research) ÷ contacts worked (completed conversations + NISL (Research)), measured once 200+ contacts are worked. The floor is under 20% (also required for a HEALTHY status). 20% to 29%: the list could use further tightening. 30% to 49%: watch, bad-fit accounts are slipping through list building. 50% or more: list building is faulty, refine it immediately before pulling more contacts.",
             ]}
           />
         </Card>

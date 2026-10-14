@@ -16,6 +16,7 @@ export const CONFIRM_SAMPLE_SIZE = 500;
 
 // NISL (Research) rate = NISL (Research) / contacts worked, where contacts
 // worked = completed conversations + NISL (Research).
+export const RESEARCH_FLOOR_PCT = 20;
 export const RESEARCH_WATCH_PCT = 30;
 export const RESEARCH_FAULTY_PCT = 50;
 
@@ -97,7 +98,7 @@ export function diagnose(counts: DispositionCounts, researchNisl = 0): Diagnosis
 
   // LIST: bad-fit accounts getting through list building. Measured against
   // contacts worked, so it is independent of the conversation-based tier.
-  if (researchNisl > 0 && contactsWorked >= MIN_SAMPLE_SIZE) {
+  if (contactsWorked >= MIN_SAMPLE_SIZE && metrics.researchNislRate >= RESEARCH_FLOOR_PCT) {
     const rate = metrics.researchNislRate;
     const severity = rate >= RESEARCH_FAULTY_PCT ? "critical" : rate >= RESEARCH_WATCH_PCT ? "watch" : "info";
     findings.push({
@@ -111,7 +112,7 @@ export function diagnose(counts: DispositionCounts, researchNisl = 0): Diagnosis
           : severity === "watch"
             ? "Bad-fit accounts are getting through list building"
             : "List could use further tightening",
-      rule: `NISL (Research) is ${f1(rate)} of contacts worked (${researchNisl} of ${contactsWorked}; watch \u2265 ${RESEARCH_WATCH_PCT}%, faulty \u2265 ${RESEARCH_FAULTY_PCT}%)`,
+      rule: `NISL (Research) is ${f1(rate)} of contacts worked (${researchNisl} of ${contactsWorked}; floor ${RESEARCH_FLOOR_PCT}%, watch \u2265 ${RESEARCH_WATCH_PCT}%, faulty \u2265 ${RESEARCH_FAULTY_PCT}%)`,
       meaning:
         severity === "critical"
           ? "The list-building process is faulty. Refine it immediately before pulling more contacts."
@@ -217,7 +218,8 @@ export function diagnose(counts: DispositionCounts, researchNisl = 0): Diagnosis
     metrics.meetingActivated >= 20 &&
     metrics.notMeReferred < 20 &&
     metrics.notInterested < 20 &&
-    metrics.nisl < 8;
+    metrics.nisl < 8 &&
+    metrics.researchNislRate < RESEARCH_FLOOR_PCT;
 
   return { completed, tier, findings, healthy, metrics };
 }
