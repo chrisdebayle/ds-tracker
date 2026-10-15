@@ -6,9 +6,10 @@ import {
   MIN_SAMPLE_SIZE,
   dispositionBreakdown,
   meetingActivatedPct,
-  meetingActivatedStatus,
+  meetingActivatedRead,
   notMeReferredPct,
-  notMeReferredStatus,
+  notMeReferredRead,
+  readLabel,
   contactRate,
   totalCompleted,
 } from "@/lib/disposition";
@@ -25,7 +26,10 @@ export function BelowMinimumBanner({ completed }: { completed: number }) {
       </div>
       <div className="text-[13px] text-[var(--db-ink-soft)] mt-1">
         This engagement has {completed} completed conversations. The Disposition Science framework
-        recommends at least {MIN_SAMPLE_SIZE} before diagnostics are statistically meaningful.
+        recommends at least {MIN_SAMPLE_SIZE} before diagnostics are statistically meaningful.{" "}
+        {completed >= EARLY_MIN_SAMPLE
+          ? "Statuses below are provisional: one is shown only when the whole 95% range is past its benchmark, otherwise it reads \u201cNot yet clear.\u201d"
+          : `Statuses are held back until ${EARLY_MIN_SAMPLE} completed conversations.`}
       </div>
     </Card>
   );
@@ -122,6 +126,8 @@ export function KpiStrip({ counts, dials }: { counts: DispositionCounts; dials: 
   const completed = totalCompleted(counts);
   const ma = meetingActivatedPct(counts);
   const nmr = notMeReferredPct(counts);
+  const maRead = meetingActivatedRead(counts);
+  const nmrRead = notMeReferredRead(counts);
   return (
     <div className="grid grid-cols-6 gap-4 mb-6">
       <KpiCard label="Total Dials/Attempts" value={String(dials)} />
@@ -135,12 +141,12 @@ export function KpiStrip({ counts, dials }: { counts: DispositionCounts; dials: 
       <KpiCard
         label="Meeting + Activated %"
         value={`${ma.toFixed(1)}%`}
-        sub={<StatusPill status={meetingActivatedStatus(counts)} label={ma >= 20 ? "On target" : "Flagged"} />}
+        sub={<StatusPill status={maRead.status} label={readLabel(maRead)} />}
       />
       <KpiCard
         label="Not Me + Referred %"
         value={`${nmr.toFixed(1)}%`}
-        sub={<StatusPill status={notMeReferredStatus(counts)} label={nmr >= 20 ? "Flagged" : "On target"} />}
+        sub={<StatusPill status={nmrRead.status} label={readLabel(nmrRead)} />}
       />
     </div>
   );
@@ -165,8 +171,8 @@ export function DispositionBreakdownTable({ counts }: { counts: DispositionCount
 export function CompositeMetricCards({ counts }: { counts: DispositionCounts }) {
   const ma = meetingActivatedPct(counts);
   const nmr = notMeReferredPct(counts);
-  const maStatus = meetingActivatedStatus(counts);
-  const nmrStatus = notMeReferredStatus(counts);
+  const maRead = meetingActivatedRead(counts);
+  const nmrRead = notMeReferredRead(counts);
   return (
     <div className="grid grid-cols-2 gap-4">
       <Card>
@@ -175,7 +181,7 @@ export function CompositeMetricCards({ counts }: { counts: DispositionCounts }) 
         </div>
         <div className="font-display text-[22px] font-semibold mb-1">{ma.toFixed(1)}%</div>
         <div className="text-[12px] text-[var(--db-muted)] mb-2">Floor 20% / Target 25%+</div>
-        <StatusPill status={maStatus} label={maStatus === "good" ? "At/above floor" : "Below floor"} />
+        <StatusPill status={maRead.status} label={readLabel(maRead, "At/above floor", "Below floor")} />
       </Card>
       <Card>
         <div className="text-[10.5px] uppercase tracking-wide text-[var(--db-muted)] font-semibold mb-1">
@@ -183,7 +189,7 @@ export function CompositeMetricCards({ counts }: { counts: DispositionCounts }) 
         </div>
         <div className="font-display text-[22px] font-semibold mb-1">{nmr.toFixed(1)}%</div>
         <div className="text-[12px] text-[var(--db-muted)] mb-2">&ge; 20% = titles off</div>
-        <StatusPill status={nmrStatus} label={nmrStatus === "watch" ? "List signal" : "Healthy"} />
+        <StatusPill status={nmrRead.status} label={readLabel(nmrRead, "Healthy", "List signal")} />
       </Card>
     </div>
   );

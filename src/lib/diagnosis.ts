@@ -6,6 +6,7 @@
 import { wilson } from "@/lib/stats";
 import {
   DispositionCounts,
+  EARLY_MIN_SAMPLE,
   MIN_SAMPLE_SIZE,
   meetingActivatedPct,
   notMeReferredPct,
@@ -14,11 +15,11 @@ import {
 } from "@/lib/disposition";
 
 export const CONFIRM_SAMPLE_SIZE = 500;
-// Early Read: from this many completed conversations (or contacts worked, for
-// the list-building rule) up to the full minimum, rules may fire only when
-// they are decisive (the whole 95% range is past the threshold), and are
-// labeled provisional.
-export const EARLY_MIN_SAMPLE = 30;
+// Early Read: from EARLY_MIN_SAMPLE completed conversations (or contacts
+// worked, for the list-building rule) up to the full minimum, rules may fire
+// only when they are decisive (the whole 95% range is past the threshold),
+// and are labeled provisional.
+export { EARLY_MIN_SAMPLE };
 
 // NISL (Research) rate = NISL (Research) / contacts worked, where contacts
 // worked = completed conversations + NISL (Research).

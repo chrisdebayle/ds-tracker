@@ -4,6 +4,8 @@
 // Daily Log form, Dashboard, Report, and both client portal views never
 // compute a benchmark differently from one another.
 
+import { wilson } from "@/lib/stats";
+
 export const DISPOSITION_KEYS = [
   "meeting",
   "activated",
@@ -98,28 +100,84 @@ export function pctStr(n: number, total: number): string {
   return total ? `${((n / total) * 100).toFixed(1)}%` : "—";
 }
 
-export function statusFor(key: DispositionKey, p: number): Status {
-  switch (key) {
-    case "meeting":
-      return p >= 8 ? "good" : "watch";
-    case "activated":
-      return "neutral";
-    case "notNow":
-      return p >= 10 && p <= 20 ? "good" : "watch";
-    case "notMe":
-    case "referred":
-      return p < 10 ? "good" : "watch";
-    case "noLongerWith":
-    case "nurture":
-    case "nisl":
-      return p < 5 ? "good" : "watch";
-    case "notInterested":
-      return p < 15 ? "good" : "watch";
-    case "dnc":
-      return p <= 3 ? "good" : "watch";
-    default:
-      return "neutral";
+/** Completed conversations needed before any status is shown; below the full minimum it is provisional. */
+export const EARLY_MIN_SAMPLE = 30;
+
+type Rule =
+  | { kind: "min"; t: number } // good when rate >= t
+  | { kind: "maxExcl"; t: number } // good when rate < t
+  | { kind: "maxIncl"; t: number } // good when rate <= t
+  | { kind: "range"; lo: number; hi: number }; // good when lo <= rate <= hi
+
+const DISPOSITION_RULES: Partial<Record<DispositionKey, Rule>> = {
+  meeting: { kind: "min", t: 8 },
+  notNow: { kind: "range", lo: 10, hi: 20 },
+  notMe: { kind: "maxExcl", t: 10 },
+  referred: { kind: "maxExcl", t: 10 },
+  noLongerWith: { kind: "maxExcl", t: 5 },
+  nurture: { kind: "maxExcl", t: 5 },
+  nisl: { kind: "maxExcl", t: 5 },
+  notInterested: { kind: "maxExcl", t: 15 },
+  dnc: { kind: "maxIncl", t: 3 },
+};
+
+function pointGood(rule: Rule, p: number): boolean {
+  switch (rule.kind) {
+    case "min":
+      return p >= rule.t;
+    case "maxExcl":
+      return p < rule.t;
+    case "maxIncl":
+      return p <= rule.t;
+    case "range":
+      return p >= rule.lo && p <= rule.hi;
   }
+}
+
+// Early read: a status is only given when the WHOLE 95% range is on one side.
+function intervalVerdict(rule: Rule, low: number, high: number): "good" | "watch" | null {
+  switch (rule.kind) {
+    case "min":
+      return low >= rule.t ? "good" : high < rule.t ? "watch" : null;
+    case "maxExcl":
+      return high < rule.t ? "good" : low >= rule.t ? "watch" : null;
+    case "maxIncl":
+      return high <= rule.t ? "good" : low > rule.t ? "watch" : null;
+    case "range":
+      return low >= rule.lo && high <= rule.hi ? "good" : high < rule.lo || low > rule.hi ? "watch" : null;
+  }
+}
+
+/** How a benchmark status should be read at the current sample size. */
+export interface StatusRead {
+  status: Status;
+  /** Decisive, but from fewer than the full minimum conversations. */
+  provisional: boolean;
+  /** Fewer than the early minimum: no status is given at all. */
+  tooEarly: boolean;
+}
+
+function judge(rule: Rule | undefined, k: number, n: number): StatusRead {
+  if (!rule) return { status: "neutral", provisional: false, tooEarly: false };
+  if (n < EARLY_MIN_SAMPLE) return { status: "neutral", provisional: false, tooEarly: true };
+  if (n >= MIN_SAMPLE_SIZE) {
+    return { status: pointGood(rule, pctNum(k, n)) ? "good" : "watch", provisional: false, tooEarly: false };
+  }
+  const { low, high } = wilson(k, n);
+  const verdict = intervalVerdict(rule, low, high);
+  return { status: verdict ?? "neutral", provisional: true, tooEarly: false };
+}
+
+/** Display label for a read, e.g. "Flagged (provisional)", "Not yet clear", "Too early". */
+export function readLabel(read: StatusRead, good = "On target", watch = "Flagged"): string {
+  if (read.tooEarly) return "Too early";
+  if (read.status === "neutral") return read.provisional ? "Not yet clear" : "\u2014";
+  const base = read.status === "good" ? good : watch;
+  return read.provisional ? `${base} (provisional)` : base;
+}
+
+export function dispositionRead(key: DispositionKey, count: number, total: number): StatusRead {
+  return judge(DISPOSITION_RULES[key], count, total);
 }
 
 export const STATUS_COLOR: Record<Status, string> = {
@@ -180,8 +238,8 @@ export function meetingActivatedPct(counts: DispositionCounts): number {
   return pctNum(counts.meeting + counts.activated, total);
 }
 
-export function meetingActivatedStatus(counts: DispositionCounts): Status {
-  return meetingActivatedPct(counts) >= 20 ? "good" : "watch";
+export function meetingActivatedRead(counts: DispositionCounts): StatusRead {
+  return judge({ kind: "min", t: 20 }, counts.meeting + counts.activated, totalCompleted(counts));
 }
 
 /** Not Me + Referred (wrong-contact rate). >= 20% signals list/titles are off. */
@@ -190,8 +248,9 @@ export function notMeReferredPct(counts: DispositionCounts): number {
   return pctNum(counts.notMe + counts.referred, total);
 }
 
-export function notMeReferredStatus(counts: DispositionCounts): Status {
-  return notMeReferredPct(counts) >= 20 ? "watch" : "good";
+export function notMeReferredRead(counts: DispositionCounts): StatusRead {
+  // good = healthy (< 20%), watch = list signal (>= 20%)
+  return judge({ kind: "maxExcl", t: 20 }, counts.notMe + counts.referred, totalCompleted(counts));
 }
 
 /**
@@ -297,8 +356,8 @@ export function dispositionBreakdown(counts: DispositionCounts): DispositionRow[
   const total = totalCompleted(counts);
   return DISP_META.map((d) => {
     const count = counts[d.key] ?? 0;
-    const p = pctNum(count, total);
-    const status = statusFor(d.key, p);
+    const read = dispositionRead(d.key, count, total);
+    const status = read.status;
     return {
       key: d.key,
       label: d.label,
@@ -306,7 +365,7 @@ export function dispositionBreakdown(counts: DispositionCounts): DispositionRow[
       pct: pctStr(count, total),
       benchmark: d.benchmark,
       status,
-      statusLabel: STATUS_LABEL[status],
+      statusLabel: d.key === "activated" ? STATUS_LABEL.neutral : readLabel(read),
       pillar: PILLAR_MAP[d.key],
     };
   });
