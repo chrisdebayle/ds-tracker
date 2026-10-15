@@ -310,6 +310,19 @@ export async function updateReportContent(engagementId: string, formData: FormDa
   revalidatePath(`/engagements/${engagementId}/report`);
 }
 
+export async function updateProgressUpdate(engagementId: string, formData: FormData) {
+  await requireAdmin();
+  await db
+    .update(engagements)
+    .set({
+      showProgressUpdate: formData.get("showProgressUpdate") === "on",
+      progressNote: String(formData.get("progressNote") ?? "").trim(),
+      updatedAt: new Date(),
+    })
+    .where(eq(engagements.id, engagementId));
+  revalidatePath(`/engagements/${engagementId}/dashboard`);
+}
+
 export async function createShareLinkAction(engagementId: string, kind: "live" | "report") {
   await requireAdmin();
   await getOrCreateShareLink(engagementId, kind);

@@ -43,6 +43,13 @@
       "when": 1792001513880,
       "tag": "0005_harsh_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792026942829,
+      "tag": "0006_opposite_shooting_star",
+      "breakpoints": true
     }
   ]
 }

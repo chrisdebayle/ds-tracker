@@ -13,8 +13,8 @@ import {
   totalCompleted,
 } from "@/lib/disposition";
 import { Card, DataTable, KpiCard, Pill, StatusPill } from "@/components/ui";
-import type { Diagnosis } from "@/lib/diagnosis";
-import { CONFIRM_SAMPLE_SIZE } from "@/lib/diagnosis";
+import type { Diagnosis, ListBuildingRead } from "@/lib/diagnosis";
+import { CONFIRM_SAMPLE_SIZE, EARLY_MIN_SAMPLE } from "@/lib/diagnosis";
 
 export function BelowMinimumBanner({ completed }: { completed: number }) {
   if (completed >= MIN_SAMPLE_SIZE) return null;
@@ -191,6 +191,7 @@ export function CompositeMetricCards({ counts }: { counts: DispositionCounts }) 
 
 const TIER_LABEL = {
   insufficient: "Not enough data yet",
+  early: "Early read (provisional)",
   directional: "Directional",
   confirmed: "Confirmed",
 } as const;
@@ -213,7 +214,7 @@ export function DiagnosisPanel({
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <div className="font-semibold text-[var(--db-dark)]">{name}</div>
             {recycledFrom !== undefined && <Pill tone="warm">Recycled{recycledFrom ? ` from: ${recycledFrom}` : ""}</Pill>}
-            <Pill tone={d.tier === "confirmed" ? "good" : d.tier === "directional" ? "blue" : "neutral"}>
+            <Pill tone={d.tier === "confirmed" ? "good" : d.tier === "directional" ? "blue" : d.tier === "early" ? "warm" : "neutral"}>
               {TIER_LABEL[d.tier]}
             </Pill>
           </div>
@@ -221,18 +222,31 @@ export function DiagnosisPanel({
             {d.completed} completed conversations
             {d.metrics.contactsWorked > d.completed &&
               ` \u00b7 ${d.metrics.contactsWorked - d.completed} NISL (Research) \u00b7 ${d.metrics.contactsWorked} contacts worked (${d.metrics.researchNislRate.toFixed(1)}% research NISL${d.metrics.contactsWorked < MIN_SAMPLE_SIZE ? ", too early to act on" : ""})`}
-            {d.tier === "insufficient" && ` \u00b7 diagnosis unlocks at ${MIN_SAMPLE_SIZE} (${MIN_SAMPLE_SIZE - d.completed} to go)`}
+            {d.tier === "insufficient" && ` \u00b7 early read unlocks at ${EARLY_MIN_SAMPLE} (${EARLY_MIN_SAMPLE - d.completed} to go), full diagnosis at ${MIN_SAMPLE_SIZE}`}
+            {d.tier === "early" && ` \u00b7 full diagnosis unlocks at ${MIN_SAMPLE_SIZE} (${MIN_SAMPLE_SIZE - d.completed} to go)`}
             {d.tier === "directional" && ` \u00b7 confirm findings at ${CONFIRM_SAMPLE_SIZE}+ (${CONFIRM_SAMPLE_SIZE - d.completed} to go)`}
           </div>
 
           {d.tier === "insufficient" && (
             <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
-              The framework says to draw no conclusions before {MIN_SAMPLE_SIZE} completed conversations. Keep
-              logging; this list is its own run, so earlier data from other lists doesn&rsquo;t count toward it.
+              Too few completed conversations to read yet. An early read opens at {EARLY_MIN_SAMPLE}; this list is
+              its own run, so data from other lists doesn&rsquo;t count toward it.
+            </p>
+          )}
+          {d.tier === "early" && (
+            <p className="text-[13px] text-[var(--db-ink-soft)] mb-3">
+              Early read: with this few conversations a rule only appears when it is decisive, meaning the whole 95%
+              range sits past its threshold. These are provisional. A rule that isn&rsquo;t listed is not cleared; it
+              just can&rsquo;t be read yet.
             </p>
           )}
           <div className="flex flex-col gap-3">
-            {d.tier !== "insufficient" && d.findings.length === 0 && (
+            {d.tier === "early" && d.findings.length === 0 && (
+              <p className="text-[13px] text-[var(--db-ink-soft)]">
+                No rule is decisive yet at this sample size.
+              </p>
+            )}
+            {(d.tier === "directional" || d.tier === "confirmed") && d.findings.length === 0 && (
               <p className="text-[13px] text-[var(--db-ink-soft)]">
                 {d.healthy
                   ? "Healthy: executing across all pillars. Activate the bucket-specific follow-up sequences (Activated: hot sequence within 48 hours; Not Now: 30/60/90 day nurture; Referred: immediate outreach; Not Interested: dormant, new hook in 6 months)."
@@ -245,6 +259,7 @@ export function DiagnosisPanel({
                     <span className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--db-primary)]">
                       {f.pillar}
                     </span>
+                    {f.provisional && <Pill tone="warm">Provisional</Pill>}
                     {f.severity && (
                       <Pill tone={f.severity === "critical" ? "fail" : f.severity === "watch" ? "warm" : "neutral"}>
                         {f.severity === "critical" ? "Faulty" : f.severity === "watch" ? "Watch" : "Tighten"}
@@ -287,6 +302,54 @@ export function DiagnosisPanel({
         </Card>
       ))}
     </div>
+  );
+}
+
+export function ListBuildingCard({ read }: { read: ListBuildingRead }) {
+  const f = read.finding;
+  return (
+    <Card>
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <div className="font-semibold text-[var(--db-dark)]">List building: net-new lists, pooled</div>
+        <Pill tone={read.provisional ? "warm" : "blue"}>{read.provisional ? "Early read (provisional)" : "Full sample"}</Pill>
+      </div>
+      <div className="text-[12px] text-[var(--db-muted)] mb-3">
+        {read.researchNisl} of {read.worked} contacts worked were ruled out from research ({read.rate.pct.toFixed(1)}%
+        {read.worked >= EARLY_MIN_SAMPLE && read.provisional
+          ? `, 95% range ${read.rate.low.toFixed(0)}\u2013${read.rate.high.toFixed(0)}%`
+          : ""}
+        ). Recycled lists are excluded because they add no new accounts to the pool. List building is one process
+        across lists, so this rule is read pooled.
+        {read.worked < EARLY_MIN_SAMPLE && ` Too early: this opens at ${EARLY_MIN_SAMPLE} contacts worked (${EARLY_MIN_SAMPLE - read.worked} to go).`}
+      </div>
+      {f ? (
+        <div className="border-l-[3px] border-[var(--db-primary)] pl-3">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wide text-[var(--db-primary)]">{f.pillar}</span>
+            {f.provisional && <Pill tone="warm">Provisional</Pill>}
+            {f.severity && (
+              <Pill tone={f.severity === "critical" ? "fail" : f.severity === "watch" ? "warm" : "neutral"}>
+                {f.severity === "critical" ? "Faulty" : f.severity === "watch" ? "Watch" : "Tighten"}
+              </Pill>
+            )}
+          </div>
+          <div className="text-[13px] font-semibold text-[var(--db-dark)]">{f.title}</div>
+          <div className="text-[12px] text-[var(--db-muted)] mb-1">IF {f.rule}</div>
+          <div className="text-[12.5px] text-[var(--db-ink-soft)] mb-1">{f.meaning}</div>
+          <div className="text-[12.5px] text-[var(--db-ink-soft)]">
+            <span className="font-semibold">Action:</span> {f.action}
+          </div>
+        </div>
+      ) : (
+        read.worked >= EARLY_MIN_SAMPLE && (
+          <p className="text-[13px] text-[var(--db-ink-soft)]">
+            {read.provisional
+              ? "Not decisive yet: the range still reaches below the 20% floor."
+              : "Within the 20% floor."}
+          </p>
+        )
+      )}
+    </Card>
   );
 }
 

@@ -42,6 +42,10 @@ export const engagements = pgTable("engagements", {
   sowReference: text("sow_reference").default(""),
   notes: text("notes").default(""),
   headlineQuote: text("headline_quote").default(""),
+  // Client-facing Progress Update on the Live View. Off by default: nothing
+  // reaches a client until the admin turns it on and (optionally) writes a note.
+  showProgressUpdate: boolean("show_progress_update").notNull().default(false),
+  progressNote: text("progress_note").default(""),
   findings: jsonb("findings").$type<string[]>(),
   nextSteps: jsonb("next_steps").$type<string[]>(),
   createdById: uuid("created_by_id").references(() => users.id),

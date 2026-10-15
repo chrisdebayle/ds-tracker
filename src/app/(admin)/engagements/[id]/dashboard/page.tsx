@@ -7,15 +7,18 @@ import {
   getSegmentBreakdown,
   type Range,
 } from "@/db/queries";
-import { diagnose } from "@/lib/diagnosis";
+import { diagnose, sourcingFinding } from "@/lib/diagnosis";
+import { ProgressUpdate } from "@/components/progress-update";
+import { ProgressUpdateControls } from "@/components/progress-update-controls";
 import { getOrCreateShareLink } from "@/lib/share-tokens";
 import { getSiteOrigin } from "@/lib/site-url";
 import { ShareLinkControls } from "@/components/share-link-controls";
-import { regenerateShareLinkAction, revokeShareLinkAction } from "../../../actions";
+import { regenerateShareLinkAction, revokeShareLinkAction, updateProgressUpdate } from "../../../actions";
 import {
   AttemptMix,
   BelowMinimumBanner,
   DiagnosisPanel,
+  ListBuildingCard,
   CompositeMetricCards,
   DispositionBreakdownTable,
   RecycledActivityNote,
@@ -76,6 +79,14 @@ export default async function DashboardPage({
     })
   );
 
+  // List building is one process across lists, so its rule is read pooled over
+  // net-new lists (recycled lists add no new accounts to the pool).
+  const netNew = segmentBreakdown.filter((b) => !b.segment.isReallocation);
+  const pooled = sourcingFinding(
+    netNew.reduce((n, b) => n + (b.researchNisl ?? 0), 0),
+    netNew.reduce((n, b) => n + (b.completed ?? 0), 0)
+  );
+
   const liveUrl = `${origin}/portal/live/${liveLink.token}`;
   const revokeLive = revokeShareLinkAction.bind(null, id, "live");
   const regenerateLive = regenerateShareLinkAction.bind(null, id, "live");
@@ -95,6 +106,13 @@ export default async function DashboardPage({
           onRegenerate={regenerateLive}
         />
       </div>
+
+      <ProgressUpdateControls
+        action={updateProgressUpdate.bind(null, id)}
+        enabled={engagement.showProgressUpdate}
+        note={engagement.progressNote}
+      />
+      <ProgressUpdate engagementId={id} note={engagement.progressNote} preview />
 
       <div className="flex gap-1 mb-6 no-print">
         {RANGES.map((r) => (
@@ -144,7 +162,10 @@ export default async function DashboardPage({
           Disposition Science IF/THEN matrix, run separately on each list (a list or message change is a
           fresh run). Priority when several fire: List, then Message, then Rep. Admin only.
         </p>
-        <DiagnosisPanel items={diagnosisItems} />
+        <div className="flex flex-col gap-4">
+          <ListBuildingCard read={pooled} />
+          <DiagnosisPanel items={diagnosisItems} />
+        </div>
       </div>
 
       <div>

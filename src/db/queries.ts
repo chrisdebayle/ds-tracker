@@ -218,3 +218,14 @@ export async function getRepBreakdown(engagementId: string, segmentId: string) {
     .filter((r) => byRep.has(r.id))
     .map((r) => ({ repId: r.id, name: r.name, counts: byRep.get(r.id)! }));
 }
+
+/** Pace facts for the Progress Update: how many days anyone actually dialed. */
+export async function getProgressFacts(engagementId: string) {
+  const rows = await db
+    .select({ date: dailyLogEntries.date, dials: dailyLogEntries.dials })
+    .from(dailyLogEntries)
+    .where(eq(dailyLogEntries.engagementId, engagementId));
+  const days = new Set(rows.filter((r) => r.dials > 0).map((r) => r.date));
+  const sorted = [...days].sort();
+  return { dialingDays: days.size, firstDate: sorted[0] ?? null, lastDate: sorted[sorted.length - 1] ?? null };
+}

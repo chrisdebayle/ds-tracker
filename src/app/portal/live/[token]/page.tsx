@@ -14,6 +14,7 @@ import {
 } from "@/components/dashboard-blocks";
 import { DataTable } from "@/components/ui";
 import { nameById } from "@/lib/lookup";
+import { ProgressUpdate } from "@/components/progress-update";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const RANGES: { key: Range; label: string }[] = [
@@ -88,7 +89,14 @@ export default async function LivePortalPage({
         </nav>
 
         {tab === "dashboard" ? (
-          <DashboardTab engagementId={engagement.id} base={base} range={range} excludeRecycled={excludeRecycled} />
+          <DashboardTab
+            engagementId={engagement.id}
+            base={base}
+            range={range}
+            excludeRecycled={excludeRecycled}
+            showProgress={engagement.showProgressUpdate}
+            progressNote={engagement.progressNote}
+          />
         ) : (
           <RecordingsTab engagementId={engagement.id} />
         )}
@@ -102,11 +110,15 @@ async function DashboardTab({
   base,
   range,
   excludeRecycled,
+  showProgress,
+  progressNote,
 }: {
   engagementId: string;
   base: string;
   range: Range;
   excludeRecycled: boolean;
+  showProgress: boolean;
+  progressNote: string | null;
 }) {
   const [{ counts, dials, totalCompleted: completed, recycled, attempts, researchNisl }, allTime, segmentBreakdown] = await Promise.all([
     getEngagementCounts(engagementId, range, { excludeRecycled }),
@@ -120,6 +132,7 @@ async function DashboardTab({
 
   return (
     <div>
+      {showProgress && <ProgressUpdate engagementId={engagementId} note={progressNote} />}
       <div className="flex gap-1 mb-6">
         {RANGES.map((r) => (
           <Link
